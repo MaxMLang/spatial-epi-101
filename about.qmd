@@ -1,0 +1,136 @@
+---
+title: "About"
+subtitle: ""
+toc: false
+page-layout: full
+---
+
+<style>
+/* Custom CSS styling */
+.instructor-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4rem 1.5rem;
+  margin-bottom: 3rem;
+  text-align: center;
+  border-radius: 0.5rem;
+}
+
+.instructor-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.instructor-header .subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.bio-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.contact-card {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.social-icons a {
+  display: inline-block;
+  padding: 0.3rem;
+  border-radius: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.social-icons a:hover {
+  transform: translateY(-2px);
+}
+
+.social-icons img {
+  width: 24px;
+  height: 24px;
+}
+
+.course-highlight {
+  background: white;
+  border-left: 4px solid #667eea;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.target-audience {
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+</style>
+
+<div class="instructor-header">
+  <h1>spatial-epi-101</h1>
+  <p class="subtitle">An Introduction to Spatial Epidemiology using R</p>
+</div>
+
+<div class="bio-section">
+
+## About This Page
+
+This workbook provides a comprehensive introduction to spatial epidemiology, designed to equip you with the essential skills needed to analyze, visualize, and interpret spatial health data using R. Through hands-on exercises and real-world examples, you'll learn how to apply spatial statistical methods to understand disease patterns, identify clusters, and explore environmental determinants of health.
+
+<div class="course-highlight">
+### What You'll Learn
+
+By the end of this workbook, you will be able to handle complex spatial datasets, create compelling visualizations, conduct spatial statistical analyses, and interpret results in the context of public health research. The curriculum emphasizes reproducible research practices and ethical considerations when working with health data.
+</div>
+
+<div class="target-audience">
+### Who This Page Is For
+
+**Ideal for:**
+
+Epidemiologists seeking to incorporate spatial methods, Graduate students in public health, geography, or related fields, Data scientists working with health or environmental data.Anyone interested in understanding spatial patterns in health outcomes
+
+**Prerequisites:**
+
+- Basic knowledge of R programming, Fundamental understanding of epidemiological concepts, Familiarity with basic statistical methods, No prior experience with spatial analysis required
+
+</div>
+
+## Learning Approach
+
+The workbook follows a practical, hands-on approach where theory is immediately applied through coding exercises and case studies. Each module builds upon previous knowledge, progressing from basic spatial data handling to advanced statistical modeling techniques. You'll work with real datasets and tackle authentic public health challenges throughout the workbook.
+
+
+<div class="contact-card">
+**Questions about the workbook?**  
+Contact: max.lang[at]stx.ox.ac.uk
+
+<div class="social-icons">
+  <a href="https://linkedin.com/in/MaxMLang" target="_blank" rel="noopener" aria-label="LinkedIn">
+    <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn">
+  </a>
+  <a href="https://github.com/MaxMLang" target="_blank" rel="noopener" aria-label="GitHub">
+    <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub">
+  </a>
+  <a href="https://orcid.org/0009-0004-6815-5321" target="_blank" rel="noopener" aria-label="ORCID">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/ORCID_iD.svg/512px-ORCID_iD.svg.png" alt="ORCID">
+  </a>
+</div>
+</div>
+
+</div>

@@ -1,0 +1,472 @@
+Of course. Using a different dataset for the demonstration is a great idea to keep things fresh. The `montereybay` dataset, which is included directly with the `rayshader` package, is a classic and visually striking example because it includes both land topography and ocean bathymetry.
+
+I have updated Module 2 to use the `montereybay` dataset for the main `rayshader` demonstration. The exercise will still use the South America data so students can apply the techniques to a new dataset.
+
+Here is the updated version of the module.
+
+---
+title: "Module 2: Advanced Spatial Data Handling and Operations"
+subtitle: "A Structured Coursebook"
+---
+
+```{r setup, include=FALSE}
+# This code chunk sets up the global options for all subsequent code chunks.
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 7.5, fig.height = 6)
+# Suppress rgl null device warning for cleaner output
+options(rgl.useNULL = TRUE)
+```
+
+In Module 1, we mastered the essentials: loading, inspecting, and creating basic visualizations of vector and raster data. Now, we move beyond displaying data to truly *analyzing* it by exploring the relationships between different spatial datasets.
+
+This module covers the core data wrangling operations that are the workhorses of any real-world geospatial analysis. These techniques are what allow an epidemiologist to connect different pieces of the puzzle—for example, linking patient cases to the environmental characteristics of their local area, or calculating the population within a certain distance of a health facility.
+
+By the end of this notebook, you will be able to:
+1.  Combine vector datasets based on their spatial location using **Spatial Joins**.
+2.  Create areas of interest around features using **Buffering**.
+3.  Perform powerful geometric operations like **Intersection** and **Union**.
+4.  Handle multi-layered raster data and perform **Raster Calculations** (Map Algebra).
+5.  Link raster and vector data by calculating **Zonal Statistics**, a cornerstone of environmental epidemiology.
+6.  Confidently manage and transform **Coordinate Reference Systems (CRS)**.
+7.  Create stunning **2D and 3D visualizations** and maps from elevation data using the `rayshader` package.
+
+---
+
+## 2.1 Setup: Loading Packages and Installation
+
+As before, we begin by loading the packages we need. This module introduces `rayshader`, a powerful package for 3D visualization.
+
+```{r install_rayshader, eval=FALSE, echo=TRUE}
+# Run these lines in your R console if you haven't installed rayshader yet
+# install.packages("devtools")
+devtools::install_github("tylermorganwall/rayshader")
+```{r load_packages}
+# Core Packages
+library(sf)
+library(terra)
+library(tmap)
+library(dplyr)
+library(rayshader) # For 3D visualization
+library(ggplot2)  # Used by some rayshader examples
+
+# Data Packages
+library(spData)
+library(maps)
+library(spDataLarge)
+library(geodata)
+```
+
+## 2.2 Advanced Vector Data Techniques with `sf`
+
+### Spatial Joins
+
+A spatial join is similar to a regular `dplyr::left_join()`, but instead of joining two tables based on a common ID column, it joins them based on their **spatial relationship**. This is an incredibly powerful tool for enriching your data.
+
+**Worked Example: Assigning Points to Polygons**
+
+Imagine we have a dataset of GPS coordinates for several disease outbreak locations, and we want to know which country each outbreak is in.
+
+```{r spatial_join}
+# First, let's get our polygon layer from the world dataset
+data(world) # Make sure world data is loaded
+sa_countries <- world %>%
+  filter(continent == "South America")
+
+# Next, let's create a dummy sf object of outbreak points.
+set.seed(2024) # for reproducibility
+outbreak_points <- st_sample(sa_countries, size = 15) %>%
+  st_as_sf() %>% # Convert the sfc_POINT object to an sf data frame
+  mutate(outbreak_id = 1:15) # Add an ID for each outbreak
+
+# Perform the spatial join
+points_with_country_data <- st_join(outbreak_points, sa_countries)
+
+# Let's look at the result
+print(points_with_country_data)
+
+# Let's map this to see the result
+tmap_mode("plot")
+tm_shape(sa_countries) + tm_polygons() + tm_borders() +
+  tm_shape(points_with_country_data) + 
+  tm_dots(col = "name_long", palette = "viridis", size=0.7, title="Country") +
+  tm_layout(main.title = "Outbreaks Assigned to Countries")
+```
+
+### Buffering
+
+Buffering creates a new polygon around a spatial feature at a specified distance. This is useful for modeling zones of influence or potential exposure. 
+
+**Important:** Buffering requires a projected CRS for distances to be meaningful (e.g., in meters).
+
+**Worked Example: Buffering Health Facilities**
+
+Let's use the `zion` dataset from `spData`. We can pretend the visitor centers are health clinics.
+
+```{r buffer}
+# Load Zion National Park data
+zion_gpkg_path <- system.file("vector/zion_points.gpkg", package = "spDataLarge")
+zion_boundary_gpkg_path <- system.file("vector/zion.gpkg", package = "spDataLarge")
+
+zion_boundary <- sf::read_sf(zion_boundary_gpkg_path)
+zion_points <- sf::read_sf(zion_gpkg_path)
+
+# First, CHECK THE CRS! The units are meters. Perfect for buffering!
+st_crs(zion_points)
+
+# Let's create a 1.5 kilometer (1500 meter) buffer around these points
+visitor_center_buffers <- st_buffer(zion_points, dist = 1500)
+
+# Let's map the park boundary, the points, and their buffers
+tm_shape(zion_boundary) + tm_polygons(col="lightgreen", alpha=0.5) + tm_borders() +
+  tm_shape(zion_points) + tm_dots(col="red", size=0.5) +
+  tm_shape(visitor_center_buffers) + tm_polygons(col="blue", alpha=0.4, border.col = "darkblue") +
+  tm_layout(main.title = "1.5km Buffers around Visitor Centers")
+```
+
+### Geometric Operations
+
+The `sf` package allows for powerful geometric operations. The two most common are `st_intersection()` (finding common area) and `st_union()` (dissolving boundaries).
+
+**Worked Example (Union): Creating a Single Regional Polygon**
+
+```{r union}
+# Get the western states from Module 1
+data("us_states")
+western_states <- us_states %>% filter(REGION == "West")
+
+# Dissolve all the internal boundaries into a single feature
+west_region_boundary <- st_union(western_states)
+
+# Plot the original states and the single dissolved boundary
+plot1 <- tm_shape(western_states) + tm_polygons("NAME", legend.show = FALSE) + tm_layout(title="Original States")
+plot2 <- tm_shape(west_region_boundary) + tm_polygons(col="lightblue") + tm_layout(title="Union of States")
+tmap_arrange(plot1, plot2)
+```
+***
+### **Exercise 1: Advanced Vector Operations**
+
+Let's practice by finding major cities in Brazil and analyzing their proximity.
+
+::: {.panel-tabset}
+
+#### Task 1
+Load the `world.cities` dataset from `spData`. Spatially join it with the `world` dataset to get the country name for each city. Then, filter to create a new `sf` object called `brazil_cities` that contains only cities in Brazil.
+
+#### Try it yourself!
+```{r ex1_task1_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex1_task1_solution}
+# Re-create all necessary objects from previous tasks
+data("world.cities", package = "maps")
+data("world")
+world_cities_sf <- st_as_sf(world.cities, coords = c("long", "lat"), crs = 4326)
+cities_in_countries <- st_join(world_cities_sf, world)
+
+brazil_cities <- cities_in_countries %>% filter(name_long == "Brazil")
+
+head(brazil_cities)
+```
+:::
+
+::: {.panel-tabset}
+
+#### Task 2
+The CRS of `brazil_cities` is WGS84 (geographic). To create meaningful buffers, transform it to a projected CRS suitable for Brazil. A good one is SIRGAS 2000 / Brazil Polyconic (EPSG:5880). Then, create a 50km (50,000 meter) buffer around each city.
+
+#### Try it yourself!
+```{r ex1_task2_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex1_task2_solution}
+# Re-create all necessary objects from previous tasks
+data("world.cities", package = "maps")
+data("world")
+world_cities_sf <- st_as_sf(world.cities, coords = c("long", "lat"), crs = 4326)
+cities_in_countries <- st_join(world_cities_sf, world)
+brazil_cities <- cities_in_countries %>% filter(name_long == "Brazil")
+
+
+# Task
+brazil_cities_proj <- st_transform(brazil_cities, "EPSG:5880")
+city_buffers_proj <- st_buffer(brazil_cities_proj, dist = 50000)
+
+head(city_buffers_proj)
+```
+:::
+
+::: {.panel-tabset}
+
+#### Task 3
+The buffers might extend beyond Brazil's land border. Get the polygon for Brazil from the `world` dataset, transform it to the same projected CRS (EPSG:5880), and then find the intersection of your buffers and the country's polygon.
+
+#### Try it yourself!
+```{r ex1_task3_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex1_task3_solution}
+# Re-create all necessary objects from previous tasks
+data("world.cities")
+data("world")
+world_cities_sf <- st_as_sf(world.cities, coords = c("long", "lat"), crs = 4326)
+cities_in_countries <- st_join(world_cities_sf, world)
+brazil_cities <- cities_in_countries %>% filter(name_long == "Brazil")
+brazil_cities_proj <- st_transform(brazil_cities, "EPSG:5880")
+city_buffers_proj <- st_buffer(brazil_cities_proj, dist = 50000)
+
+# Task
+brazil_poly_proj <- world %>% 
+  filter(name_long == "Brazil") %>%
+  st_transform("EPSG:5880")
+city_buffers_intersect <- st_intersection(city_buffers_proj, brazil_poly_proj)
+head(city_buffers_intersect)
+```
+:::
+
+::: {.panel-tabset}
+
+#### Task 4
+Create a map showing the final intersected buffers on top of the Brazil polygon.
+
+#### Try it yourself!
+```{r ex1_task4_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex1_task4_solution}
+# Re-create all necessary objects
+data("world.cities")
+data("world")
+world_cities_sf <- st_as_sf(world.cities, coords = c("long", "lat"), crs = 4326)
+cities_in_countries <- st_join(world_cities_sf, world)
+brazil_cities <- cities_in_countries %>% filter(name_long == "Brazil")
+brazil_cities_proj <- st_transform(brazil_cities, "EPSG:5880")
+city_buffers_proj <- st_buffer(brazil_cities_proj, dist = 50000)
+brazil_poly_proj <- world %>% 
+  filter(name_long == "Brazil") %>%
+  st_transform("EPSG:5880")
+city_buffers_intersect <- st_intersection(city_buffers_proj, brazil_poly_proj)
+
+# Create the map
+tm_shape(brazil_poly_proj) + tm_polygons() +
+  tm_shape(city_buffers_intersect) + tm_polygons(col="red", alpha=0.5) +
+  tm_layout(main.title = "50km Buffer Zones around Major Brazilian Cities")
+```
+:::
+
+***
+
+## 2.3 Advanced Raster Data Techniques with `terra`
+
+### Raster Calculations (Map Algebra)
+
+Map algebra is the process of performing calculations on one or more raster layers. With `terra`, this is as simple as using standard R arithmetic operators.
+
+**Worked Example: Calculating Temperature Range**
+```{r map_algebra}
+# Load the data and calculate the annual mean in Celsius
+temp_path <- tempdir()
+global_tmax <- geodata::worldclim_global(var = "tmax", res = 10, path = temp_path) / 10
+
+# Access individual layers (months) using [[...]]
+jan_tmax <- global_tmax[[1]]
+jul_tmax <- global_tmax[[7]]
+
+# Perform the calculation
+annual_range <- jan_tmax - jul_tmax
+
+# Rename the layer for the plot legend
+names(annual_range) <- "Temp Range (°C)"
+
+# Plot the result
+tm_shape(annual_range) + tm_raster(palette="RdBu", style="cont") +
+  tm_layout(main.title = "Annual Max Temp Range (Jan - July)")
+```
+
+### Zonal Statistics
+
+This is arguably one of the most important techniques for environmental epidemiology. It involves summarizing raster values within zones defined by vector polygons (e.g., calculating mean NDVI per administrative district).
+
+**Worked Example: Mean Elevation per Country in South America**
+
+```{r zonal_stats}
+# 1. Get the polygon data (zones)
+sa_countries <- world %>%
+  filter(continent == "South America")
+
+# 2. Get the raster data (values)
+# We will download a coarse global elevation raster
+temp_path <- tempdir() # Ensure temp_path is defined
+elevation <- geodata::worldclim_global(var = "elev", res = 10, path = temp_path)
+
+# 3. Perform the zonal extraction
+mean_elev <- terra::extract(elevation, sa_countries, fun = "mean", ID = FALSE)
+
+# 4. Combine the results with the polygon data
+sa_countries_with_elev <- cbind(sa_countries, mean_elev)
+
+# 5. Map the result
+tm_shape(sa_countries_with_elev) +
+  tm_polygons(col = "wc2.1_10m_elev", 
+              title = "Mean Elevation (m)", 
+              palette = "YlOrBr") +
+  tm_layout(main.title = "Mean Elevation by Country in South America")
+```
+
+---
+
+## 2.4 3D Visualization with `rayshader`
+
+While `tmap` and `ggplot2` are excellent for 2D maps, the `rayshader` package allows us to create stunning 2D and 3D data visualizations, adding a new dimension to our analysis. It uses elevation data in a standard R matrix and a combination of raytracing and hillshading algorithms to generate beautiful maps.
+
+### Worked Example: Creating a 3D Map of Monterey Bay
+
+The core `rayshader` workflow involves taking an elevation matrix and layering different shade components (color, shadow, ambient light) before plotting it in 2D or 3D. We will use the `montereybay` dataset, which is built into `rayshader`.
+
+```{r rayshader_example, fig.show='hold'}
+# 1. Get Data: The `montereybay` dataset is already a matrix.
+elmat <- montereybay
+
+# 2. Create a 2D map by layering shades
+# Start with a texture layer based on elevation
+map_base <- elmat %>%
+  sphere_shade(texture = "imhof1")
+
+# Add lambertian and ambient shadow layers
+map_with_shadows <- map_base %>%
+  add_shadow(ray_shade(elmat, zscale = 50, lambert = FALSE), 0.5) %>%
+  add_shadow(ambient_shade(elmat, zscale = 50), 0)
+
+# Plot the final 2D map
+plot_map(map_with_shadows)
+
+# 3. Create a 3D Map with a water layer
+# In plot_3d, we can add water directly.
+# The waterdepth is 0, since that's sea level in this dataset.
+map_with_shadows %>%
+  plot_3d(elmat, zscale = 50, fov = 0, theta = -45, phi = 45, 
+          windowsize = c(1000, 800), zoom = 0.75,
+          water = TRUE, waterdepth = 0, wateralpha = 0.5, watercolor = "lightblue",
+          waterlinecolor = "white", waterlinealpha = 0.5)
+
+# Use render_snapshot() to capture the current 3D view
+render_snapshot()
+```
+
+### **Exercise 2: 3D Visualization with `rayshader`**
+
+Let's apply these 3D visualization skills to the elevation data for South America we used in the zonal statistics example.
+
+::: {.panel-tabset}
+
+#### Task 1
+Crop the global elevation raster (`elevation`) to the extent of South America (`sa_countries`). Then, convert the resulting `SpatRaster` object into a matrix using `raster_to_matrix()`.
+
+#### Try it yourself!
+```{r ex2_task1_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex2_task1_solution}
+# Re-create necessary objects
+data("world")
+sa_countries <- world %>% filter(continent == "South America")
+temp_path <- tempdir()
+elevation <- geodata::worldclim_global(var = "elev", res = 10, path = temp_path)
+
+# Task
+sa_elevation_raster <- crop(elevation, sa_countries)
+sa_elevation_matrix <- raster_to_matrix(sa_elevation_raster)
+```
+:::
+
+::: {.panel-tabset}
+
+#### Task 2
+Using the South America elevation matrix, create a 2D map.
+1. Start with `sphere_shade()`. Try the `imhof4` texture.
+2. Add a water layer using `add_water()` and `detect_water()`.
+3. Add a shadow layer using `ray_shade()`.
+4. Plot the result with `plot_map()`.
+
+#### Try it yourself!
+```{r ex2_task2_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex2_task2_solution}
+# Re-create matrix from previous task
+data("world")
+sa_countries <- world %>% filter(continent == "South America")
+temp_path <- tempdir()
+elevation <- geodata::worldclim_global(var = "elev", res = 10, path = temp_path)
+sa_elevation_raster <- crop(elevation, sa_countries)
+sa_elevation_matrix <- raster_to_matrix(sa_elevation_raster)
+
+# Task
+sa_elevation_matrix %>%
+  sphere_shade(texture = "imhof4") %>%
+  add_water(detect_water(sa_elevation_matrix), color = "imhof4") %>%
+  add_shadow(ray_shade(sa_elevation_matrix, zscale = 3), 0.5) %>%
+  plot_map()
+```
+:::
+
+::: {.panel-tabset}
+
+#### Task 3
+Take the 2D map you just created and render it in 3D using `plot_3d()`. Experiment with the `theta` and `phi` camera arguments to get a nice view of the Andes mountains. Use `render_snapshot()` to save the view.
+
+#### Try it yourself!
+```{r ex2_tast3_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex2_task3_solution}
+# Re-create objects from previous task
+data("world")
+sa_countries <- world %>% filter(continent == "South America")
+temp_path <- tempdir()
+elevation <- geodata::worldclim_global(var = "elev", res = 10, path = temp_path)
+sa_elevation_raster <- crop(elevation, sa_countries)
+# Keep the original matrix with NAs for water detection
+sa_elevation_matrix_raw <- raster_to_matrix(sa_elevation_raster)
+
+sa_elevation_matrix_filled <- sa_elevation_matrix_raw
+min_elev <- min(sa_elevation_matrix_filled, na.rm = TRUE)
+sa_elevation_matrix_filled[is.na(sa_elevation_matrix_filled)] <- min_elev
+
+# Create the map object using the 'filled' matrix for shading
+# but the 'raw' matrix for detecting water.
+sa_map <- sa_elevation_matrix_filled %>%
+  sphere_shade(texture = "imhof4") %>%
+  add_water(detect_water(sa_elevation_matrix_raw), color = "imhof4") %>%
+  add_shadow(ray_shade(sa_elevation_matrix_filled, zscale = 3), 0.5)
+
+# Task: Plot in 3D using the 'filled' matrix
+sa_map %>%
+  plot_3d(sa_elevation_matrix_filled, zscale = 50, fov = 0, theta = 45, phi = 30, 
+          windowsize = c(1000, 800), zoom = 0.7)
+
+render_snapshot()
+```
+:::
+
+---
+# Module 2 Conclusion
+
+In this module, we moved from basic data handling to the fundamental analytical operations that underpin geospatial analysis. You learned how to integrate different datasets using **spatial joins**, model areas of influence with **buffers**, and perform powerful **geometric operations** and **raster calculations**.
+
+Most importantly, you learned how to bridge the vector-raster divide using **zonal statistics**, a technique that is absolutely critical for combining environmental data with administrative or health data. Finally, you learned how to take your analysis into the third dimension with the `rayshader` package, creating compelling 3D visualizations from elevation data.
+
+With these skills, you are now equipped to perform complex data preparation tasks. In the next module, we will focus specifically on acquiring and processing remote sensing data, such as NDVI and LST.

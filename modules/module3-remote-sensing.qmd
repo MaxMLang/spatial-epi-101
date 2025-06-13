@@ -1,0 +1,249 @@
+---
+title: "Module 3: Remote Sensing Data for Environmental Epidemiology"
+---
+
+```{r setup, include=FALSE}
+# This code chunk sets up the global options for all subsequent code chunks.
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+In the previous modules, we learned how to handle and analyze existing vector and raster datasets. But where does much of our environmental raster data come from? The answer is **Remote Sensing (RS)**—the science of obtaining information about the Earth's surface from a distance, typically using satellites.
+
+This module provides a primer on the fundamentals of remote sensing and demonstrates how to process satellite imagery in R to derive key environmental indices used in epidemiology. Understanding the source and nature of your data is critical for interpreting it correctly and being aware of its limitations.
+
+By the end of this notebook, you will be able to:
+1.  Understand the fundamental principles of remote sensing, including spatial, temporal, and spectral resolution.
+2.  Identify common satellite systems used for public health applications (e.g., Landsat, Sentinel).
+3.  Calculate and interpret key environmental indices like the **Normalized Difference Vegetation Index (NDVI)** and the **Normalized Difference Water Index (NDWI)** from satellite imagery.
+4.  Recognize the importance of preprocessing steps and know where to source analysis-ready data.
+5.  Connect these environmental variables to the ecology of vector-borne diseases like malaria and schistosomiasis.
+
+
+---
+
+## 3.1 Setup: Loading Packages and Data
+
+We will use our standard suite of packages. We will also need the `spDataLarge` package, which contains a sample Landsat satellite image perfect for our exercises.
+
+If you have not installed `spDataLarge` before, please do so now. Note: it is a large package.
+
+```{r install_code}
+# This command only needs to be run once.
+# install.packages("spDataLarge")
+```
+
+Now, let's load our required libraries.
+
+```{r load_packages}
+# Core Packages for spatial data handling and plotting
+library(sf)
+library(terra)
+library(tmap)
+library(dplyr)
+
+# Data Package with a sample satellite image
+library(spDataLarge)
+```
+
+
+## 3.2 Fundamentals of Remote Sensing
+
+This section is conceptual but essential for understanding the data we'll be working with.
+
+### The Four Resolutions
+The quality and characteristics of satellite data are defined by four types of resolution: **Spatial**, **Temporal**, **Spectral**, and **Radiometric**.
+
+### Common Satellite Systems for Public Health
+* **Landsat Program (NASA/USGS):** The workhorse of environmental monitoring.
+* **Sentinel Program (ESA Copernicus):** A newer fleet of satellites providing high-resolution data.
+* **MODIS (NASA):** This sensor provides coarse spatial resolution imagery but has a very high temporal resolution (daily global coverage).
+
+## 3.3 Deriving and Interpreting Environmental Indices in R
+
+Environmental indices are calculated by combining the reflectance values from different spectral bands. This allows us to enhance specific features, like vegetation or water, that are not obvious in a standard visible-light image.
+
+### Loading Satellite Data
+
+We will use a sample Landsat image that comes with the `spDataLarge` package. This is a multi-band `SpatRaster`.
+
+```{r load_landsat}
+# Get the file path to the sample landsat image from the package
+landsat_path <- system.file("raster/landsat.tif", package = "spDataLarge")
+
+# Load the image using terra::rast()
+landsat <- rast(landsat_path)
+
+# Inspect the object to see its properties (dimensions, resolution, CRS)
+print(landsat)
+
+# Look at the names of the bands. 
+# This specific file includes 7 bands from a Landsat 8 scene.
+# Band 1 = Blue, Band 2 = Green, Band 3 = Red, Band 4 = NIR, etc.
+names(landsat)
+```
+This sample `landsat.tif` image is a real satellite excerpt covering the area around **Zion National Park** in Utah, USA. We can visually confirm this by plotting the park's boundary over the raster image.
+
+```{r plot_zion_boundary}
+# Load the Zion National Park boundary to prove the location
+zion_gpkg_path <- system.file("vector/zion.gpkg", package = "spDataLarge")
+zion_boundary <- st_read(zion_gpkg_path, layer = "zion")
+
+# Create a true-color composite plot with the boundary overlaid
+# For a true-color image, we map the Red, Green, and Blue bands to the RGB channels.
+# For this dataset: Red = band 3, Green = band 2, Blue = band 1.
+tm_shape(landsat) +
+  tm_rgb(r = 3, g = 2, b = 1, stretch = TRUE) +
+tm_shape(zion_boundary) +
+  tm_borders(col = "black", lwd = 2) +
+  tm_layout(main.title = "Zion National Park Boundary over Landsat Image", 
+            main.title.position = "center")
+```
+
+As you can see, the raster image aligns perfectly with the park boundary. For this dataset, the standard band order we need for our analysis is:
+* **Layer 2:** Green
+* **Layer 3:** Red
+* **Layer 4:** Near-Infrared (NIR)
+
+We will select these bands using their position number with `[[...]]`.
+
+### Normalized Difference Vegetation Index (NDVI)
+
+NDVI is a standardized index of vegetation greenness and health. The formula is: $$NDVI = \frac{(NIR - Red)}{(NIR + Red)}$$
+
+**Worked Example: Calculating NDVI**
+
+```{r calculate_ndvi}
+# Assign the Near-Infrared (NIR) and Red bands to variables for clarity
+# Based on our data: NIR is the 4th band, Red is the 3rd band.
+nir <- landsat[[4]]
+red <- landsat[[3]]
+
+# Apply the NDVI formula using raster algebra
+landsat_ndvi <- (nir - red) / (nir + red)
+
+# Plot the result using tmap
+# The "RdYlGn" palette is a good choice for NDVI, with green indicating healthier vegetation.
+tm_shape(landsat_ndvi) +
+  tm_raster(palette = "RdYlGn", title = "NDVI") +
+  tm_layout(main.title = "Normalized Difference Vegetation Index (NDVI)")
+```
+
+### Normalized Difference Water Index (NDWI)
+
+NDWI is used to delineate open water features. A common formula is: $$NDWI = \frac{(Green - NIR)}{(Green + NIR)}$$
+
+**Worked Example: Calculating NDWI**
+
+```{r calculate_ndwi}
+# Assign the Green and NIR bands to variables
+# Based on our data: Green is the 2nd band, NIR is the 4th band.
+green <- landsat[[2]]
+nir <- landsat[[4]]
+
+# Apply the NDWI formula using raster algebra
+landsat_ndwi <- (green - nir) / (green + nir)
+
+# Plot the result
+# The "-RdYlBu" palette (reversed) is used so high values (water) appear blue.
+tm_shape(landsat_ndwi) +
+  tm_raster(palette = "-RdYlBu", title = "NDWI") +
+  tm_layout(main.title = "Normalized Difference Water Index (NDWI)")
+```
+
+---
+
+### **Exercise 1: Calculating Vegetation Indices**
+
+Now it's your turn to practice calculating indices from the same `landsat` object.
+
+
+
+::: {.panel-tabset}
+
+#### Task 1
+The Soil-Adjusted Vegetation Index (SAVI) is a modification of NDVI that attempts to correct for the influence of soil brightness. The formula is:
+$$SAVI = \frac{(NIR - Red)}{(NIR + Red + L)} \times (1 + L)$$
+Using the `landsat` raster, calculate SAVI. Assume the soil brightness correction factor `L` is `0.5`.
+
+#### Try it yourself!
+```{r ex1_task1_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex1_task1_solution}
+# First, ensure the landsat object from the worked example is available
+# (This code is repeated to make the solution self-contained)
+landsat_path <- system.file("raster/landsat.tif", package = "spDataLarge")
+landsat <- rast(landsat_path)
+
+# Assign bands to variables using their position number
+nir <- landsat[[4]]
+red <- landsat[[3]]
+L <- 0.5 # Soil brightness correction factor
+
+# Calculate SAVI using the provided formula
+landsat_savi <- ((nir - red) / (nir + red + L)) * (1 + L)
+
+# Plot your result
+tm_shape(landsat_savi) + tm_raster(palette="RdYlGn", title="SAVI")
+```
+
+:::
+
+::: {.panel-tabset}
+
+#### Task 2
+Compare your SAVI map with the NDVI map we created earlier. Use `tmap_arrange()` to view them side-by-side. Do you notice any subtle differences?
+
+#### Try it yourself!
+```{r ex1_task2_prompt}
+# Your code here
+```
+
+#### Solution
+```{r ex1_task2_solution}
+# Re-create all necessary objects to make this chunk self-contained
+landsat_path <- system.file("raster/landsat.tif", package = "spDataLarge")
+landsat <- rast(landsat_path)
+nir <- landsat[[4]]
+red <- landsat[[3]]
+L <- 0.5
+
+# Re-calculate NDVI 
+landsat_ndvi <- (nir - red) / (nir + red)
+
+# Re-calculate SAVI
+landsat_savi <- ((nir - red) / (nir + red + L)) * (1 + L)
+
+# Create the two separate tmap objects
+map_ndvi <- tm_shape(landsat_ndvi) + tm_raster(palette = "RdYlGn", title = "NDVI") + tm_layout(title="NDVI")
+map_savi <- tm_shape(landsat_savi) + tm_raster(palette="RdYlGn", title = "SAVI") + tm_layout(title="SAVI")
+
+# Arrange them side-by-side for comparison
+tmap_arrange(map_ndvi, map_savi)
+```
+
+:::
+
+
+---
+
+## 3.4 Application to Vector-Borne Disease Ecology
+
+The indices we've calculated serve as proxies for environmental conditions that favor or inhibit disease transmission.
+
+* **Malaria**: High NDWI can indicate mosquito breeding sites. High NDVI near settlements may indicate resting sites for adult mosquitoes. Land Surface Temperature (LST) is critical, as the development of the *Plasmodium* parasite inside the mosquito is highly temperature-dependent.
+* **Schistosomiasis**: NDWI is used to map the freshwater habitats of the intermediate host snails. NDVI can indicate the presence of aquatic vegetation that snails use for food and shelter. LST affects snail survival and the development of schistosome larvae.
+
+---
+
+# Module 3 Conclusion
+
+In this module, you've taken a significant step from being a user of spatial data to understanding its origin. You've learned the fundamental principles of remote sensing and, most importantly, have gained hands-on experience in turning raw satellite imagery into meaningful environmental variables like NDVI and NDWI.
+
+It is vital to understand that these remote sensing indices serve as **proxies** for complex ecological processes, not direct measures of vectors or disease. They indicate environmental conditions that are suitable for transmission, but the strength of this association depends heavily on the local context, including the specific vector species, human behavior, and existing control interventions.
+
+A significant challenge in applying these tools is the potential "scale mismatch" between the satellite's resolution (e.g., a 10m or 30m pixel) and the micro-environments that define vector habitats. This is why a map of environmental suitability is only a hypothesis until it is tested against reality on the ground.
+

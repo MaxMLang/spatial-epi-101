@@ -1,0 +1,633 @@
+---
+title: "Module 1: Mastering R for Spatial Data"
+subtitle: "A Structured Coursebook"
+---
+
+```{r setup, include=FALSE}
+# This code chunk sets up the global options for all subsequent code chunks.
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+The goal of this module is to build a rock-solid foundation in handling, manipulating, and visualizing spatial data within the R environment. We will focus on the "tidyverse" approach to spatial analysis, which treats spatial data as a special kind of data frame, making many operations intuitive and powerful.
+
+By the end of this notebook, you will be able to:
+
+1.  Set up your R environment by loading the essential packages for geospatial analysis.
+2.  Understand, load, inspect, and manipulate **vector data** using the `sf` package.
+3.  Understand, load, and perform fundamental operations on **raster data** using the `terra` package.
+4.  Create beautiful and informative static maps using the `tmap` and `ggplot2` packages.
+5.  Generate interactive maps for data exploration using `tmap`'s "view" mode.
+
+------------------------------------------------------------------------
+
+## 1.1 Setup: Installing and Loading Core Packages
+
+For our work, we will rely on a core set of packages that form the backbone of modern spatial analysis in R.
+
+If you have not installed these packages before, you must do so first. You can run the `install.packages()` function in your R console for each one. You only need to do this once.
+
+```{r install_code, eval=FALSE, echo=TRUE}
+# Run these lines in your R console if you haven't installed the packages yet
+# install.packages("sf")
+# install.packages("terra")
+# install.packages("tmap")
+# install.packages("ggplot2") # The premier package for data visualization
+# install.packages("dplyr")
+# install.packages("spData")
+# install.packages("geodata")
+# install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source")
+```
+
+Once installed, we need to load the packages into our current R session using the `library()` function. We do this at the start of every script.
+
+```{r load_packages}
+# --- Core Packages ---
+library(sf)         # Handles vector data (Simple Features). The modern standard.
+library(terra)      # Handles raster data. The modern, high-performance successor to the 'raster' package.
+library(tmap)       # Used for creating beautiful thematic maps (like ggplot2 for maps).
+library(ggplot2)    # A powerful and versatile grammar of graphics for visualization.
+library(dplyr)      # A grammar of data manipulation, works seamlessly with 'sf'.
+
+# --- Data Packages ---
+library(spData)     # Contains example spatial datasets for practice.
+library(geodata)    # For downloading common global spatial datasets like country boundaries or climate data.
+```
+
+## 1.2 Vector Data with `sf`
+
+### What is Vector Data?
+
+Vector data represents geographical features using discrete geometric objects: **Points**, **Lines**, and **Polygons**.
+
+### The `sf` Object
+
+The `sf` package provides a framework for working with vector data in R. An `sf` object is fundamentally an R **data frame** with a special list-column that stores the geometry. This structure is powerful because it allows you to use `dplyr` verbs directly on your spatial data.
+
+### Worked Example: Exploring World Countries
+
+Let's load the `world` dataset from the `spData` package and see what an `sf` object looks like.
+
+```{r sf_worked_example}
+# Load the 'world' dataset
+data(world)
+
+# 1. Inspect the object's class
+class(world)
+
+# 2. Print the object
+print(world)
+
+# 3. Manipulate data with dplyr
+world_africa <- world %>%
+  filter(continent == "Africa") %>%
+  select(name_long, pop, gdpPercap, lifeExp, geom)
+
+# Let's look at our new, smaller sf object
+print(world_africa)
+
+# 4. Check the Coordinate Reference System (CRS)
+st_crs(world_africa)
+
+# 5. Basic Plotting
+plot(st_geometry(world_africa), main = "Map of Africa (Geometries Only)")
+```
+
+------------------------------------------------------------------------
+
+### **Exercise 1: Vector Data Manipulation**
+
+Now it's your turn. Use the `us_states` dataset, which is also included in the `spData` package.
+
+::: panel-tabset
+#### Task 1
+
+Load the `us_states` data and inspect its Coordinate Reference System (CRS).
+
+#### Try it yourself!
+
+```{r ex1_task1_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex1_task1_solution}
+data(us_states)
+st_crs(us_states)
+```
+:::
+
+::: panel-tabset
+#### Task 2
+
+Use `dplyr::filter()` to create a new `sf` object containing only the states in the "West" region.
+
+#### Your turn!
+
+```{r ex1_task2_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex1_task2_solution}
+western_states <- us_states %>%
+  filter(REGION == "West")
+
+# Optional: Print the names to check your work
+print(western_states$NAME)
+```
+:::
+
+::: panel-tabset
+#### Task 3
+
+Calculate the area of each western state using `st_area()`. The result will be in square meters. Create a new column in your `western_states` object called `area_sqkm` that contains the area in square kilometers (Hint: 1 $km^2$ = 1,000,000 $m^2$ ).
+
+#### Try it yourself!
+
+```{r ex1_task3_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex1_task3_solution}
+# First, create the 'western_states' object from the previous task
+western_states <- us_states %>% 
+  filter(REGION == "West")
+
+# Now, add the new area column
+western_states_with_area <- western_states %>%
+  mutate(area_sqkm = st_area(.) / 1000000)
+
+# View the NAME and the new area column
+print(western_states_with_area[, c("NAME", "area_sqkm")])
+```
+:::
+
+::: panel-tabset
+#### Task 4
+
+Create a simple plot of your `western_states` object using `plot()`. Customize it by changing the color of the polygons (`col`) and their borders (`border`).
+
+#### Try it yourself!
+
+```{r ex1_task4_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex1_task4_solution}
+# First, create the 'western_states' object from task 2
+western_states <- us_states %>% 
+  filter(REGION == "West")
+
+plot(st_geometry(western_states), 
+     main = "Western US States", 
+     col = "khaki", 
+     border = "darkgreen")
+```
+:::
+
+------------------------------------------------------------------------
+
+## 1.3 Raster Data with `terra`
+
+### What is Raster Data?
+
+While vector data uses discrete shapes, raster data represents the world as a continuous grid of cells, or **pixels**. Each pixel in the grid has a value representing some measured phenomenon. Think of it like a digital photograph.
+
+*Epidemiological examples: Satellite imagery, elevation models, or surfaces showing environmental variables like land surface temperature, precipitation, or vegetation density (NDVI).*
+
+### The `terra` Package
+
+The `terra` package is the modern, high-performance engine for raster data in R. It is designed to be easier to use and much faster than its predecessor, the `raster` package, especially with the very large files common in remote sensing.
+
+### Worked Example: Exploring Elevation in Uganda
+
+Let's download elevation data for Uganda and perform two fundamental raster operations: **cropping** and **masking**.
+
+```{r terra_worked_example}
+# We will use the sf object for Uganda we can get from the 'world' dataset
+uganda_sf <- world %>% filter(iso_a2 == "UG")
+
+# 1. Download Data
+# The geodata package can download various global datasets.
+# We will get elevation data at 30-arcsecond resolution.
+temp_path <- tempdir()
+elevation_uganda <- geodata::elevation_30s(country = "UGA", path = temp_path)
+
+# 2. Inspect the SpatRaster Object
+print(elevation_uganda)
+
+# 3. Basic Plotting
+plot(elevation_uganda, main = "Elevation of Uganda (Rectangular Extent)")
+plot(st_geometry(uganda_sf), add = TRUE, border = "red", lwd = 2)
+
+# 4. Crop and Mask
+elevation_cropped <- crop(elevation_uganda, uganda_sf)
+elevation_masked <- mask(elevation_cropped, uganda_sf)
+
+# 5. Plot the Final Result
+plot(elevation_masked, main = "Masked Elevation of Uganda (m)")
+plot(st_geometry(uganda_sf), add = TRUE, border = "black", lwd = 1)
+```
+
+------------------------------------------------------------------------
+
+### **Exercise 2: Raster Data Manipulation**
+
+Let's practice these skills by creating a map of the mean annual temperature for Brazil.
+
+::: panel-tabset
+#### Task 1
+
+Download the global average maximum temperature data from WorldClim at 10-minute resolution. This will be a `SpatRaster` with 12 layers (one for each month). Calculate the mean across all 12 layers to get a single-layer raster of the annual average. *Remember: The data is in °C \* 10, so you'll need to divide the final result by 10.*
+
+#### Try it yourself!
+
+```{r ex2_task1_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex2_task1_solution}
+temp_path <- tempdir() # Define temp_path if not already defined
+global_tmax <- geodata::worldclim_global(var = "tmax", res = 10, path = temp_path)
+mean_annual_tmax <- mean(global_tmax)
+mean_annual_tmax_c <- mean_annual_tmax / 10
+
+# Optional: print the final raster object to check it
+print(mean_annual_tmax_c)
+```
+:::
+
+::: panel-tabset
+#### Task 2
+
+Create an `sf` object for Brazil from the `world` dataset.
+
+#### Try it yourself!
+
+```{r ex2_task2_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex2_task2_solution}
+brazil_sf <- world %>%
+  filter(name_long == "Brazil")
+  
+print(brazil_sf)
+```
+:::
+
+::: panel-tabset
+#### Task 3
+
+Crop and then mask the global temperature raster (`mean_annual_tmax_c`) to the exact shape of Brazil.
+
+#### Try it yourself!
+
+```{r ex2_task3_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex2_task3_solution}
+# Re-create objects from previous tasks to make this chunk self-contained
+temp_path <- tempdir()
+global_tmax <- geodata::worldclim_global(var = "tmax", res = 10, path = temp_path)
+mean_annual_tmax_c <- mean(global_tmax) / 10
+brazil_sf <- world %>% filter(name_long == "Brazil")
+
+# Now perform the crop and mask
+tmax_brazil_cropped <- crop(mean_annual_tmax_c, brazil_sf)
+tmax_brazil_masked <- mask(tmax_brazil_cropped, brazil_sf)
+
+print(tmax_brazil_masked)
+```
+:::
+
+::: panel-tabset
+#### Task 4
+
+Plot your final masked temperature raster for Brazil. Add the country's border to the plot for context.
+
+#### Try it yourself!
+
+```{r ex2_task4_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex2_task4_solution}
+# Re-create the necessary objects from previous tasks
+temp_path <- tempdir()
+global_tmax <- geodata::worldclim_global(var = "tmax", res = 10, path = temp_path)
+mean_annual_tmax_c <- mean(global_tmax) / 10
+brazil_sf <- world %>% filter(name_long == "Brazil")
+tmax_brazil_masked <- mask(crop(mean_annual_tmax_c, brazil_sf), brazil_sf)
+
+# Now create the plot
+plot(tmax_brazil_masked, main = "Mean Annual Max Temperature for Brazil (°C)")
+plot(st_geometry(brazil_sf), add = TRUE, border = "black")
+```
+:::
+
+------------------------------------------------------------------------
+
+## 1.4 Creating Maps with `tmap`
+
+While `plot()` is great for quick checks, the `tmap` package provides a powerful and flexible system for creating publication-quality thematic maps. It uses a "grammar of graphics" approach, similar to `ggplot2`, where you build a map layer by layer.
+
+The main components are:
+* `tm_shape()`: Specifies the `sf` or `SpatRaster` object to be mapped.
+* `tm_polygons()`, `tm_lines()`, `tm_dots()`, `tm_raster()`: Specify *how* to draw the shape.
+* `tm_layout()`, `tm_compass()`, `tm_scale_bar()`: Functions to customize the map's appearance and add map furniture.
+
+A key feature of `tmap` is its dual-mode functionality. You can create:
+1.  **Static Maps (`tmap_mode("plot")`)**: High-quality images suitable for publications, reports, and presentations.
+2.  **Interactive Maps (`tmap_mode("view")`)**: Dynamic maps that you can pan, zoom, and query in a web browser or the RStudio Viewer. This is incredibly useful for data exploration.
+
+### Worked Example: Static Maps
+
+Let's create a high-quality map showing life expectancy in Africa, highlighting Uganda, and another map showing Uganda's elevation.
+
+```{r tmap_worked_example, fig.show='hold'}
+# Set tmap mode to "plot" for static maps.
+tmap_mode("plot")
+
+# Map 1: A Choropleth Map of Life Expectancy
+# A choropleth map is one where polygons are colored according to a variable's value.
+map1 <- tm_shape(world_africa) +
+  tm_polygons(
+    col = "lifeExp",                      # The column to map
+    palette = "plasma",                   # Color palette
+    style = "quantile",                   # How to break data into color bins
+    title = "Life Expectancy (Years)"     # Legend title
+    ) +
+  tm_shape(uganda_sf) +                   # Add a new shape layer for Uganda
+  tm_borders(col = "black", lwd = 2.5) +  # Draw its borders
+  tm_layout(
+    main.title = "Life Expectancy in African Nations",
+    main.title.position = "center",
+    legend.position = c("left", "bottom"),
+    frame = FALSE, 
+    inner.margins = c(0.05, 0.1, 0.05, 0.05)
+    ) +
+  tm_compass(type = "8star", position = c("right", "top"), size = 3) +
+  tm_scale_bar(position = c("right", "bottom"), breaks = c(0, 1000, 2000))
+
+# Map 2: Combining Raster and Vector Data
+# Let's map the masked Uganda elevation raster we created earlier.
+map2 <- tm_shape(elevation_masked) +
+  tm_raster(
+    title = "Elevation (m)"
+    ) +
+  tm_shape(uganda_sf) +
+  tm_borders(lwd = 1.5, col = "black") +
+  tm_layout(main.title = "Elevation of Uganda")  +
+  tm_compass(type = "arrow", position = c("left", "top")) +
+  tm_scale_bar()
+
+# Print the maps
+map1
+map2
+```
+
+### The Power of Interactive Mode
+
+The real magic of `tmap` for data exploration comes from its interactive mode. By simply running `tmap_mode("view")` once, all subsequent `tmap` plots become interactive Leaflet maps. You can click on features to see their data, zoom in on areas of interest, and switch between different basemaps. This is invaluable for sanity-checking your data and discovering patterns.
+
+Let's take our first map and view it interactively.
+
+```{r tmap_interactive_example}
+# Switch to interactive view mode
+tmap_mode("view")
+
+# Re-run the same code for our first map
+# No other changes are needed!
+tm_shape(world_africa) +
+  tm_polygons(
+    fill = "lifeExp",
+    # When hovering, show the country name and its life expectancy
+    popup.vars = c("Country" = "name_long", "Life Expectancy" = "lifeExp")
+    ) +
+  tm_shape(uganda_sf) +
+  tm_borders(col = "black", lwd = 2.5) +
+  tm_layout(main.title = "Interactive Map of Life Expectancy in Africa")
+
+# --- IMPORTANT ---
+# Switch back to plot mode for the rest of the document
+tmap_mode("plot")
+```
+
+------------------------------------------------------------------------
+
+### **Exercise 3: Thematic Mapping with `tmap`**
+
+Now, create your own high-quality map of the United States.
+
+::: panel-tabset
+#### Task 1
+
+Using the `us_states` dataset, create a choropleth map showing the total population in 2015 (`total_pop_15`). Add state borders with `tm_borders()`.
+
+#### Try it yourself!
+
+```{r ex3_task1_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex3_task1_solution}
+# Ensure us_states data is loaded
+data(us_states)
+
+tm_shape(us_states) +
+  tm_polygons(col = "total_pop_15", title = "Population (2015)") +
+  tm_borders(col = "gray70")
+```
+:::
+
+::: panel-tabset
+#### Task 2
+
+Improve the map from Task 1.
+* Add a main title.
+* Change the color palette (try `"YlGnBu"` or `"Reds"`).
+* Add a compass and a scale bar.
+* Make the state borders white and thin (`lwd = 0.5`).
+
+#### Try it yourself!
+
+```{r ex3_task2_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex3_task2_solution}
+# Ensure us_states data is loaded
+data(us_states)
+
+tm_shape(us_states) +
+  tm_polygons(
+    col = "total_pop_15", 
+    title = "Total Population (2015)",
+    palette = "YlGnBu",
+    style = "jenks" # Jenks style is good for skewed data
+    ) +
+  tm_borders(col = "white", lwd = 0.5) +
+  tm_layout(
+    main.title = "Population of the United States, 2015",
+    frame = FALSE,
+    legend.outside = TRUE
+    ) +
+  tm_compass(type = "arrow", position = c("right", "top")) +
+  tm_scale_bar(position = c("left", "bottom"))
+```
+:::
+
+------------------------------------------------------------------------
+
+## 1.5 Creating Maps with `ggplot2`
+
+For those already familiar with the `ggplot2` package, its "grammar of graphics" can be extended to create highly customized, professional maps. The `sf` package integrates directly with `ggplot2` through a special geometric layer: `geom_sf()`.
+
+The core idea is the same as any other ggplot: you initialize a plot with `ggplot()`, specify your data, and then add layers. For spatial data, `geom_sf()` is the primary layer.
+
+### Worked Example: Mapping US Population with `ggplot2`
+
+Let's use `ggplot2` and `geom_sf` to create a map of population density for the `us_states` dataset.
+
+```{r ggplot_worked_example}
+# Load the data if not already in the environment
+data(us_states)
+
+# We can add a new column for population density right in our pipe
+us_states_plot <- us_states %>%
+  mutate(pop_density = as.numeric(total_pop_15 / AREA))
+
+# Create the map with ggplot2
+ggplot(data = us_states_plot) +
+  # The main geometry layer for sf objects
+  geom_sf(aes(fill = pop_density)) + 
+  
+  # Customize the color scale
+  scale_fill_viridis_c(
+    trans = "log10", # Use a log scale for better visualization of skewed data
+    name = "Population Density\n(people / sq. mile, log scale)"
+    ) +
+  
+  # Add titles and a clean theme
+  labs(
+    title = "US Population Density by State, 2015",
+    subtitle = "Data from the spData package",
+    caption = "Map created with ggplot2"
+  ) +
+  theme_void() + # A minimal theme, good for maps
+  theme(legend.position = "bottom")
+
+```
+
+### **Exercise 4: Thematic Mapping with `ggplot2`**
+
+Let's use `ggplot2` to visualize the economic data in the `world_africa` dataset we created earlier.
+
+::: panel-tabset
+#### Task 1
+
+Using the `world_africa` object, create a simple map of the African continent using `ggplot()` and `geom_sf()`.
+
+#### Try it yourself!
+
+```{r ex4_task1_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex4_task1_solution}
+# Assuming 'world_africa' was created in section 1.2
+ggplot(data = world_africa) +
+  geom_sf() +
+  ggtitle("Map of Africa")
+```
+:::
+
+::: panel-tabset
+#### Task 2
+
+Map the `gdpPercap` (GDP per capita) variable to the `fill` aesthetic of the polygons.
+
+#### Try it yourself!
+
+```{r ex4_task2_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex4_task2_solution}
+ggplot(data = world_africa) +
+  geom_sf(aes(fill = gdpPercap))
+```
+:::
+
+::: panel-tabset
+#### Task 3
+
+Improve your map.
+* Use `scale_fill_viridis_c()` for a better color scale and add a title to the legend.
+* Add a main title and a subtitle to the map using `labs()`.
+* Apply `theme_bw()` for a cleaner look.
+* Add a black border layer for Uganda (`uganda_sf`) on top of the other countries. (Hint: Use a second `geom_sf()` call, but set `fill = NA` so it doesn't cover the colors).
+
+#### Try it yourself!
+
+```{r ex4_task3_prompt}
+# Your code here
+```
+
+#### Solution
+
+```{r ex4_task3_solution}
+# Assuming 'world_africa' and 'uganda_sf' are loaded
+ggplot() +
+  # Layer 1: African countries colored by GDP
+  geom_sf(data = world_africa, aes(fill = gdpPercap)) +
+  
+  # Layer 2: Uganda outline
+  geom_sf(data = uganda_sf, fill = NA, color = "red", linewidth = 0.8) +
+  
+  # Customize scales and labels
+  scale_fill_viridis_c(name = "GDP per Capita (USD)") +
+  labs(
+    title = "GDP Per Capita in Africa",
+    subtitle = "Highlighting Uganda",
+    caption = "Source: spData package"
+  ) +
+  theme_bw()
+```
+:::
+
+------------------------------------------------------------------------
+
+# Module 1 Conclusion
+
+Congratulations on completing the first module!
+
+You have acquired the fundamental skills for working with spatial data in R. You have learned how to use `sf` and `dplyr` to manage and query vector data, how to use `terra` to perform essential operations on raster data, and how to turn that data into informative and visually appealing maps.
+
+Specifically, you now have two powerful mapping tools at your disposal:
+* **`tmap`**, which provides a straightforward grammar for creating both static, publication-quality maps and incredibly useful interactive maps for data exploration.
+* **`ggplot2`**, which extends its famous grammar of graphics to spatial data with `geom_sf`, allowing for deep customization and integration into a tidyverse workflow.

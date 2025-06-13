@@ -1,0 +1,65 @@
+# Main project settings
+project:
+  type: website
+  output-dir: docs # Common practice to output the website to a /docs folder
+
+# Website specific configurations
+website:
+  title: "An Introduction to GeoEpiR" # The title that appears in the browser tab
+  description: "A foundational course on geospatial analysis for epidemiology in R."
+  # The live URL for your Quarto website once published on GitHub Pages
+  site-url: "https://MaxMLang.github.io/spatial-epi-101/"
+
+  # Navigation bar settings
+  navbar:
+    title: "spatial-epi-101" # Short title on the navbar
+    background: primary # Use the theme's primary color for the background
+    pinned: true # Make the navbar stick to the top when scrolling
+    
+    # Links on the left side of the navbar
+    left:
+      - href: index.qmd
+        text: Home
+      - text: "Course Modules"
+        menu:
+          - text: "Module 1: R Essentials"
+            href: modules/module1-essentials.qmd
+          - text: "Module 2: Advanced Operations"
+            href: modules/module2-advanced.qmd
+          - text: "Module 3: Remote Sensing"
+            href: modules/module3-remote-sensing.qmd
+          - text: "Module 4: Validation Methods"
+            href: modules/module4-validation.qmd
+          - text: "Module 5: Spatial Modeling"
+            href: modules/module5-modeling.qmd
+          - text: "---" # This creates a visual separator line
+          - text: "Module 6: Resources & Best Practices"
+            href: modules/module6-resources.qmd
+      - href: about.qmd
+        text: About
+
+    # Links on the right side of the navbar
+    right:
+      - icon: github
+        # The URL to your GitHub repository
+        href: "https://github.com/MaxMLang/spatial-epi-101"
+        aria-label: GitHub
+
+  # Footer settings for the bottom of every page
+  page-footer:
+    left: "Copyright 2025, Max M. Lang"
+    right:
+      - text: "Built with Quarto"
+        href: "https://quarto.org/"
+
+# Default format options for all HTML pages
+format:
+  html:
+    theme:
+      light: cosmo # A clean, modern theme for light mode
+      dark: cyborg # A corresponding dark mode theme
+    css: styles.css # Link to a custom CSS file for your own styling
+    toc: true # Automatically generate a table of contents on each page
+    toc-depth: 3
+    code-fold: true # Allow users to fold/unfold code blocks
+    code-summary: "Show/Hide Code"

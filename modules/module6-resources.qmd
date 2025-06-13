@@ -1,0 +1,56 @@
+---
+title: "Module 6: References and Further Reading"
+---
+
+This final module steps back from specific methods to focus on the broader principles of conducting high-quality, reliable, and ethical geospatial research. It also provides a curated list of resources to support your continued learning journey in spatial epidemiology.
+
+By the end of this notebook, you will have access to:
+1. Links to the excellent online courses that inspired this one.
+2. A list of key textbooks for deepening your theoretical and practical knowledge.
+3. Direct links to the documentation for all the R packages used in this course.
+4. An overview of best practices for ensuring your work is reproducible and ethical.
+
+## 6.1 Course Recommendations and Key Resources
+
+This course was developed with inspiration from several outstanding, publicly available resources. 
+
+* [Spatial epidemiology in R](https://hughst.github.io/) by Hugh Sturrock A comprehensive online course covering a wide range of topics in spatial epidemiology, from which some concepts and datasets in this course were adapted.
+
+* [The Epidemiologist R Handbook](https://epirhandbook.com/en/gis-basics.html) An excellent, practical guide for using R in epidemiology. The "GIS Basics" chapter provides a great overview of handling spatial data in R
+
+
+## 6.2 Essential Textbooks for Further Learning
+
+To dive deeper into the theory and application of spatial analysis, the following books are considered foundational texts in the field.
+
+* **[Geocomputation with R](https://r.geocompx.org/)** by Robin Lovelace, Jakub Nowosad, and Jannes Muenchow. This is the modern, definitive guide to doing spatial analysis in R, with a focus on the `sf`, `terra`, and `tmap` packages. The entire book is available online for free.
+
+* **Applied Spatial Data Analysis with R, 2nd edition** by Roger S. Bivand, Edzer Pebesma, and Virgilio Gómez-Rubio. This book provides a deep, rigorous dive into the statistical theory behind many spatial methods, including the use of the `spdep` package.
+
+* **Spatial Data Science: With Applications in R** by Edzer Pebesma and Roger Bivand. An updated text from the leading figures in the R-spatial community, reflecting the most current approaches and packages.
+
+
+## 6.3 Core R Packages Used in This Course
+
+This course would not be possible without the incredible ecosystem of open-source R packages developed and maintained by the community. Below are links to the official documentation for the primary packages we used.
+
+#### Data Handling and Manipulation
+* [`sf`](https://r-spatial.github.io/sf/): The modern standard for working with vector data (points, lines, polygons) in R.
+* [`terra`](https://rspatial.github.io/terra/): The modern, high-performance package for working with raster data.
+* [`dplyr`](https://dplyr.tidyverse.org/): A core part of the tidyverse, providing a powerful grammar for data manipulation that works seamlessly with `sf` objects.
+
+#### Data Access
+* [`spData`](https://github.com/Nowosad/spData): Contains the diverse sample datasets used throughout this course, such as `us_states` and `world`.
+* [`spDataLarge`](https://github.com/Nowosad/spDataLarge): A companion package containing larger datasets, including the `landsat.tif` satellite image.
+* [`geodata`](https://rspatial.github.io/geodata/): A package for downloading common global datasets like country boundaries from GADM and climate data from WorldClim.
+
+#### Visualization
+* [`tmap`](https://r-tmap.github.io/tmap/): A dedicated package for creating beautiful and flexible static and interactive thematic maps.
+* [rayshader](https://www.rayshader.com/): A package for creating beautiful 2D and 3D data visualizations, especially for mapping and elevation data.
+
+#### Spatial Statistics & Validation
+* [`spdep`](https://r-spatial.github.io/spdep/): A foundational package for analyzing spatial dependence, including tools for creating neighbor weights and running tests like Moran's I.
+* [`spatstat`](https://spatstat.org/): A comprehensive suite of tools for point pattern analysis, including Ripley's K-function.
+* [`caret`](https://topepo.github.io/caret/): A general-purpose package for machine learning and model training that provides excellent tools for creating confusion matrices and calculating accuracy statistics.
+* [`pROC`](https://rdrr.io/cran/pROC/): A specialized package for generating, analyzing, and plotting ROC curves.
+* [`smacpod`](https://rdrr.io/cran/smacpod/man/smacpod-package.html): A package that implements spatial scan statistics.
