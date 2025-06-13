@@ -371,7 +371,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#worked-example-creating-a-3d-map-of-monterey-bay" id="toc-worked-example-creating-a-3d-map-of-monterey-bay" class="nav-link" data-scroll-target="#worked-example-creating-a-3d-map-of-monterey-bay">Worked Example: Creating a 3D Map of Monterey Bay</a></li>
   <li><a href="#exercise-2-3d-visualization-with-rayshader" id="toc-exercise-2-3d-visualization-with-rayshader" class="nav-link" data-scroll-target="#exercise-2-3d-visualization-with-rayshader"><strong>Exercise 2: 3D Visualization with <code>rayshader</code></strong></a></li>
   </ul></li>
-  <li><a href="#module-2-conclusion" id="toc-module-2-conclusion" class="nav-link" data-scroll-target="#module-2-conclusion">Module 2 Conclusion</a></li>
+  <li><a href="#module-2-finish-line" id="toc-module-2-finish-line" class="nav-link" data-scroll-target="#module-2-finish-line">Module 2 Finish Line</a></li>
   </ul>
 </nav>
     </div>
@@ -382,7 +382,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Module 2: Advanced Spatial Data Handling and Operations</h1>
-<p class="subtitle lead">A Structured Coursebook</p>
 </div>
 
 
@@ -399,9 +398,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Of course. Using a different dataset for the demonstration is a great idea to keep things fresh. The <code>montereybay</code> dataset, which is included directly with the <code>rayshader</code> package, is a classic and visually striking example because it includes both land topography and ocean bathymetry.</p>
-<p>I have updated Module 2 to use the <code>montereybay</code> dataset for the main <code>rayshader</code> demonstration. The exercise will still use the South America data so students can apply the techniques to a new dataset.</p>
-<p>Here is the updated version of the module.</p>
 <p>In Module 1, we mastered the essentials: loading, inspecting, and creating basic visualizations of vector and raster data. Now, we move beyond displaying data to truly <em>analyzing</em> it by exploring the relationships between different spatial datasets.</p>
 <p>This module covers the core data wrangling operations that are the workhorses of any real-world geospatial analysis. These techniques are what allow an epidemiologist to connect different pieces of the puzzle—for example, linking patient cases to the environmental characteristics of their local area, or calculating the population within a certain distance of a health facility.</p>
 <p>By the end of this notebook, you will be able to: 1. Combine vector datasets based on their spatial location using <strong>Spatial Joins</strong>. 2. Create areas of interest around features using <strong>Buffering</strong>. 3. Perform powerful geometric operations like <strong>Intersection</strong> and <strong>Union</strong>. 4. Handle multi-layered raster data and perform <strong>Raster Calculations</strong> (Map Algebra). 5. Link raster and vector data by calculating <strong>Zonal Statistics</strong>, a cornerstone of environmental epidemiology. 6. Confidently manage and transform <strong>Coordinate Reference Systems (CRS)</strong>. 7. Create stunning <strong>2D and 3D visualizations</strong> and maps from elevation data using the <code>rayshader</code> package.</p>
@@ -1146,8 +1142,8 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <hr>
 </section>
 </section>
-<section id="module-2-conclusion" class="level1">
-<h1>Module 2 Conclusion</h1>
+<section id="module-2-finish-line" class="level1">
+<h1>Module 2 Finish Line</h1>
 <p>In this module, we moved from basic data handling to the fundamental analytical operations that underpin geospatial analysis. You learned how to integrate different datasets using <strong>spatial joins</strong>, model areas of influence with <strong>buffers</strong>, and perform powerful <strong>geometric operations</strong> and <strong>raster calculations</strong>.</p>
 <p>Most importantly, you learned how to bridge the vector-raster divide using <strong>zonal statistics</strong>, a technique that is absolutely critical for combining environmental data with administrative or health data. Finally, you learned how to take your analysis into the third dimension with the <code>rayshader</code> package, creating compelling 3D visualizations from elevation data.</p>
 <p>With these skills, you are now equipped to perform complex data preparation tasks. In the next module, we will focus specifically on acquiring and processing remote sensing data, such as NDVI and LST.</p>

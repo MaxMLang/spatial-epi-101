@@ -343,13 +343,14 @@ ul.task-list li input[type="checkbox"] {
 .hero-banner {
   position: relative;
   color: white;
+  background-image: url('nordlinger_ries.png');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   padding: 8rem 1.5rem;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   text-align: center;
 }
-
 .hero-banner::before {
   content: '';
   position: absolute;
@@ -357,39 +358,39 @@ ul.task-list li input[type="checkbox"] {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(17, 24, 39, 0.6); /* Semi-transparent dark overlay */
+  background-color: rgba(17, 24, 39, 0.0); /* Semi-transparent dark overlay */
   z-index: 1;
 }
-
 .hero-banner .quarto-title-block {
   position: relative;
   z-index: 2;
   color: white;
 }
-
 .hero-banner h1.title {
     font-size: 3.5rem;
     font-weight: 700;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0rem;
 }
-
 .hero-banner .subtitle {
     font-size: 1.25rem;
     color: #e5e7eb; /* A light gray for the subtitle */
 }
-
+.hero-banner .image-caption {
+    font-size: 0.9rem;
+    color: #d1d5db;
+    font-style: italic;
+    margin-top: 1rem;
+}
 /* Remove default Quarto title block styling for the hero banner */
 .quarto-title-block {
     margin-bottom: 0;
 }
-
 /* Center section headers */
 .content-section h2 {
     text-align: center;
     margin-top: 4rem;
     margin-bottom: 2rem;
 }
-
 /* Style for module cards */
 .module-card {
     border: 1px solid #dee2e6;
@@ -398,29 +399,35 @@ ul.task-list li input[type="checkbox"] {
     height: 100%;
     transition: box-shadow 0.3s ease;
 }
-
 .module-card:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-
+.image-caption {
+    font-size: 0.85rem;
+    color: #6b7280;
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 2rem;
+}
 .module-card h3 {
     font-size: 1.1rem;
     font-weight: 600;
     margin-top: 0;
 }
-
 </style>
-<div class="hero-banner" style="background-image: url('nordlinger-ries.png');">
+<div class="hero-banner">
 
 </div>
-<div class="content-section container">
-<section id="welcome-to-the-course" class="level2">
-<h2 class="anchored" data-anchor-id="welcome-to-the-course">Welcome to the Course</h2>
-<p>This course provides a comprehensive introduction to the principles and practices of spatial epidemiology. You will learn how to leverage the power of R to analyze, visualize, and interpret spatial health data, gaining critical skills for public health research and practice.</p>
+<div class="image-caption">
+3D visualization of Nördlinger Ries crater
+</div>
+<section id="welcome-to-the-workbook" class="level2">
+<h2 class="anchored" data-anchor-id="welcome-to-the-workbook">Welcome to the Workbook</h2>
+<p>This workbook provides a comprehensive introduction to the principles and practices of spatial epidemiology. You will learn how to leverage the power of R to analyze, visualize, and interpret spatial health data, gaining critical skills for public health research and practice.</p>
 <hr>
 </section>
-<section id="course-modules" class="level2">
-<h2 class="anchored" data-anchor-id="course-modules">Course Modules</h2>
+<section id="workbook-modules" class="level2">
+<h2 class="anchored" data-anchor-id="workbook-modules">Workbook Modules</h2>
 <div class="grid">
 <div class="g-col-12 g-col-md-4">
 <section id="module-1-mastering-r-for-spatial-data" class="level3 module-card">
@@ -459,12 +466,12 @@ ul.task-list li input[type="checkbox"] {
 </section>
 </div>
 </div>
-</section>
-</div>
+</section></main></div>
 
 
 
-</main> <!-- /main -->
+
+ <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     // Ensure there is a toggle, if there isn't float one in the top right
@@ -877,7 +884,7 @@ ul.task-list li input[type="checkbox"] {
     }
   });
   </script>
-</div> <!-- /content -->
+ <!-- /content -->
 <footer class="footer">
   <div class="nav-footer">
     <div class="nav-footer-left">
