@@ -329,28 +329,28 @@ window.Quarto = {
     <ul class="dropdown-menu" aria-labelledby="nav-menu-course-modules">    
         <li>
     <a class="dropdown-item" href="../modules/module1-essentials.html">
- <span class="dropdown-text">Module 1: R Essentials</span></a>
+ <span class="dropdown-text">Module 1: Mastering R for Spatial Data</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module2-advanced.html">
- <span class="dropdown-text">Module 2: Advanced Operations</span></a>
+ <span class="dropdown-text">Module 2: Advanced Spatial Data Handling and Operations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module3-remote-sensing.html">
- <span class="dropdown-text">Module 3: Remote Sensing</span></a>
+ <span class="dropdown-text">Module 3: Remote Sensing Data for Environmental Epidemiology</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module4-validation.html">
- <span class="dropdown-text">Module 4: Validation Methods</span></a>
+ <span class="dropdown-text">Module 4: Validating Remote Sensed Data with Ground-Truth Observations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module5-modeling.html">
- <span class="dropdown-text">Module 5: Spatial Modeling</span></a>
+ <span class="dropdown-text">Module 5: Analyzing Spatial Clustering</span></a>
   </li>  
         <li><hr class="dropdown-divider"></li>
         <li>
     <a class="dropdown-item" href="../modules/module6-resources.html">
- <span class="dropdown-text">Module 6: Resources &amp; Best Practices</span></a>
+ <span class="dropdown-text">Module 6: References and Further Reading</span></a>
   </li>  
     </ul>
   </li>
@@ -425,7 +425,14 @@ window.Quarto = {
 
 <p>In the previous modules, we learned how to handle and analyze existing vector and raster datasets. But where does much of our environmental raster data come from? The answer is <strong>Remote Sensing (RS)</strong>—the science of obtaining information about the Earth’s surface from a distance, typically using satellites.</p>
 <p>This module provides a primer on the fundamentals of remote sensing and demonstrates how to process satellite imagery in R to derive key environmental indices used in epidemiology. Understanding the source and nature of your data is critical for interpreting it correctly and being aware of its limitations.</p>
-<p>By the end of this notebook, you will be able to: 1. Understand the fundamental principles of remote sensing, including spatial, temporal, and spectral resolution. 2. Identify common satellite systems used for public health applications (e.g., Landsat, Sentinel). 3. Calculate and interpret key environmental indices like the <strong>Normalized Difference Vegetation Index (NDVI)</strong> and the <strong>Normalized Difference Water Index (NDWI)</strong> from satellite imagery. 4. Recognize the importance of preprocessing steps and know where to source analysis-ready data. 5. Connect these environmental variables to the ecology of vector-borne diseases like malaria and schistosomiasis.</p>
+<p>By the end of this notebook, you will be able to:</p>
+<ol type="1">
+<li><p>Understand the fundamental principles of remote sensing, including spatial, temporal, and spectral resolution.</p></li>
+<li><p>Identify common satellite systems used for public health applications (e.g., Landsat, Sentinel).</p></li>
+<li><p>Calculate and interpret key environmental indices like the <strong>Normalized Difference Vegetation Index (NDVI)</strong> and the <strong>Normalized Difference Water Index (NDWI)</strong> from satellite imagery.</p></li>
+<li><p>Recognize the importance of preprocessing steps and know where to source analysis-ready data.</p></li>
+<li><p>Connect these environmental variables to the ecology of vector-borne diseases like malaria and schistosomiasis.</p></li>
+</ol>
 <hr>
 <section id="setup-loading-packages-and-data" class="level2">
 <h2 class="anchored" data-anchor-id="setup-loading-packages-and-data">3.1 Setup: Loading Packages and Data</h2>
@@ -463,9 +470,9 @@ window.Quarto = {
 <section id="common-satellite-systems-for-public-health" class="level3">
 <h3 class="anchored" data-anchor-id="common-satellite-systems-for-public-health">Common Satellite Systems for Public Health</h3>
 <ul>
-<li><strong>Landsat Program (NASA/USGS):</strong> The workhorse of environmental monitoring.</li>
-<li><strong>Sentinel Program (ESA Copernicus):</strong> A newer fleet of satellites providing high-resolution data.</li>
-<li><strong>MODIS (NASA):</strong> This sensor provides coarse spatial resolution imagery but has a very high temporal resolution (daily global coverage).</li>
+<li><p><strong>Landsat Program (NASA/USGS):</strong> The workhorse of environmental monitoring.</p></li>
+<li><p><strong>Sentinel Program (ESA Copernicus):</strong> A newer fleet of satellites providing high-resolution data.</p></li>
+<li><p><strong>MODIS (NASA):</strong> This sensor provides coarse spatial resolution imagery but has a very high temporal resolution (daily global coverage).</p></li>
 </ul>
 </section>
 </section>
@@ -547,7 +554,12 @@ Projected CRS: UTM Zone 12, Northern Hemisphere</code></pre>
 </div>
 </div>
 </div>
-<p>As you can see, the raster image aligns perfectly with the park boundary. For this dataset, the standard band order we need for our analysis is: * <strong>Layer 2:</strong> Green * <strong>Layer 3:</strong> Red * <strong>Layer 4:</strong> Near-Infrared (NIR)</p>
+<p>As you can see, the raster image aligns perfectly with the park boundary. For this dataset, the standard band order we need for our analysis is:</p>
+<ul>
+<li><p><strong>Layer 2:</strong> Green</p></li>
+<li><p><strong>Layer 3:</strong> Red</p></li>
+<li><p><strong>Layer 4:</strong> Near-Infrared (NIR)</p></li>
+</ul>
 <p>We will select these bands using their position number with <code>[[...]]</code>.</p>
 </section>
 <section id="normalized-difference-vegetation-index-ndvi" class="level3">
@@ -1146,7 +1158,7 @@ Projected CRS: UTM Zone 12, Northern Hemisphere</code></pre>
 <footer class="footer">
   <div class="nav-footer">
     <div class="nav-footer-left">
-<p>Copyright 2025, Max M. Lang</p>
+<p>Created by Max M. Lang</p>
 </div>   
     <div class="nav-footer-center">
       &nbsp;

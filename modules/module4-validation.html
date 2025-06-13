@@ -300,28 +300,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <ul class="dropdown-menu" aria-labelledby="nav-menu-course-modules">    
         <li>
     <a class="dropdown-item" href="../modules/module1-essentials.html">
- <span class="dropdown-text">Module 1: R Essentials</span></a>
+ <span class="dropdown-text">Module 1: Mastering R for Spatial Data</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module2-advanced.html">
- <span class="dropdown-text">Module 2: Advanced Operations</span></a>
+ <span class="dropdown-text">Module 2: Advanced Spatial Data Handling and Operations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module3-remote-sensing.html">
- <span class="dropdown-text">Module 3: Remote Sensing</span></a>
+ <span class="dropdown-text">Module 3: Remote Sensing Data for Environmental Epidemiology</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module4-validation.html">
- <span class="dropdown-text">Module 4: Validation Methods</span></a>
+ <span class="dropdown-text">Module 4: Validating Remote Sensed Data with Ground-Truth Observations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module5-modeling.html">
- <span class="dropdown-text">Module 5: Spatial Modeling</span></a>
+ <span class="dropdown-text">Module 5: Analyzing Spatial Clustering</span></a>
   </li>  
         <li><hr class="dropdown-divider"></li>
         <li>
     <a class="dropdown-item" href="../modules/module6-resources.html">
- <span class="dropdown-text">Module 6: Resources &amp; Best Practices</span></a>
+ <span class="dropdown-text">Module 6: References and Further Reading</span></a>
   </li>  
     </ul>
   </li>
@@ -395,7 +395,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <p>In Module 3, we successfully transformed raw satellite imagery into meaningful environmental variables like NDVI. We now have maps that <em>suggest</em> where vegetation is healthy or where water bodies exist. But a crucial question remains: <strong>How accurate are these maps?</strong> Do the patterns we see from space truly reflect the conditions on the ground where disease transmission actually occurs?</p>
 <p>This module addresses that question head-on. <strong>Validation</strong> is the process of rigorously assessing the accuracy of our models and maps against independent, real-world data, often called <strong>ground-truth</strong> data. Without this step, our maps are merely hypotheses. With it, they become evidence-based tools for public health action.</p>
-<p>By the end of this notebook, you will be able to: 1. Understand the principle of ground-truthing and its importance in epidemiology. 2. Link ground-truth data (points) to remote sensing data (rasters) by <strong>extracting</strong> pixel values. 3. Perform a formal accuracy assessment for a classified map using a <strong>Confusion Matrix</strong>. 4. Calculate and interpret key accuracy metrics like Overall Accuracy, Producer’s/User’s Accuracy (Sensitivity/Specificity), and the Kappa coefficient. 5. Evaluate models that predict probabilities using <strong>Receiver Operating Characteristic (ROC) curves</strong> and the <strong>Area Under the Curve (AUC)</strong>.</p>
+<p>By the end of this notebook, you will be able to: 1. Understand the principle of ground-truthing and its importance in epidemiology.</p>
+<ol start="2" type="1">
+<li><p>Link ground-truth data (points) to remote sensing data (rasters) by <strong>extracting</strong> pixel values.</p></li>
+<li><p>Perform a formal accuracy assessment for a classified map using a <strong>Confusion Matrix</strong>.</p></li>
+<li><p>Calculate and interpret key accuracy metrics like Overall Accuracy, Producer’s/User’s Accuracy (Sensitivity/Specificity), and the Kappa coefficient.</p></li>
+<li><p>Evaluate models that predict probabilities using <strong>Receiver Operating Characteristic (ROC) curves</strong> and the <strong>Area Under the Curve (AUC)</strong>.</p></li>
+</ol>
 <hr>
 <section id="setup-loading-packages" class="level2">
 <h2 class="anchored" data-anchor-id="setup-loading-packages">4.1 Setup: Loading Packages</h2>
@@ -516,20 +522,31 @@ Projected CRS: WGS 84 / UTM zone 12N
 <div class="cell" data-layout-align="center">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Simulate a "true" habitat map (the ground truth reality)</span></span>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Create a more clustered "true" habitat map</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">101</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>true_habitat <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="at">nrows=</span><span class="dv">50</span>, <span class="at">ncols=</span><span class="dv">50</span>, <span class="at">vals=</span><span class="fu">rbinom</span>(<span class="dv">2500</span>, <span class="dv">1</span>, <span class="fl">0.4</span>))</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(true_habitat) <span class="ot">&lt;-</span> <span class="st">"actual"</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: Simulate our "predicted" map from a model with ~20% error</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>predicted_habitat <span class="ot">&lt;-</span> true_habitat</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>n_errors <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">ncell</span>(predicted_habitat) <span class="sc">*</span> <span class="fl">0.20</span>)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>error_cells <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">ncell</span>(predicted_habitat), n_errors)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>predicted_habitat[error_cells] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> predicted_habitat[error_cells]</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(predicted_habitat) <span class="ot">&lt;-</span> <span class="st">"predicted"</span></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot them to see the difference</span></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">c</span>(true_habitat, predicted_habitat), <span class="at">main=</span><span class="fu">c</span>(<span class="st">"Actual Habitat"</span>, <span class="st">"Predicted Habitat"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Method 1: Using spatial autocorrelation with focal statistics</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Start with random values</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>true_habitat <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="at">nrows=</span><span class="dv">50</span>, <span class="at">ncols=</span><span class="dv">50</span>, <span class="at">vals=</span><span class="fu">runif</span>(<span class="dv">2500</span>))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply multiple rounds of smoothing to create clusters</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>) {</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  true_habitat <span class="ot">&lt;-</span> <span class="fu">focal</span>(true_habitat, <span class="at">w=</span><span class="fu">matrix</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">3</span>), <span class="at">fun=</span>mean, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to binary based on threshold - KEY FIX: convert to numeric</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>true_habitat <span class="ot">&lt;-</span> true_habitat <span class="sc">&gt;</span> <span class="fu">quantile</span>(<span class="fu">values</span>(true_habitat), <span class="fl">0.6</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="fu">values</span>(true_habitat) <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">values</span>(true_habitat))</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(true_habitat) <span class="ot">&lt;-</span> <span class="st">"actual"</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: Create predicted map with ~20% error</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>predicted_habitat <span class="ot">&lt;-</span> true_habitat</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>n_errors <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">ncell</span>(predicted_habitat) <span class="sc">*</span> <span class="fl">0.20</span>)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>error_cells <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">ncell</span>(predicted_habitat), n_errors)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>predicted_habitat[error_cells] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> predicted_habitat[error_cells]</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(predicted_habitat) <span class="ot">&lt;-</span> <span class="st">"predicted"</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot results</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">c</span>(true_habitat, predicted_habitat), <span class="at">main=</span><span class="fu">c</span>(<span class="st">"Actual Habitat (Clustered)"</span>, <span class="st">"Predicted Habitat"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -544,10 +561,12 @@ Projected CRS: WGS 84 / UTM zone 12N
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>validation_points <span class="ot">&lt;-</span> <span class="fu">spatSample</span>(true_habitat, <span class="at">size =</span> <span class="dv">250</span>, <span class="st">"random"</span>, <span class="at">xy=</span><span class="cn">TRUE</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>validation_points<span class="sc">$</span>predicted <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">extract</span>(predicted_habitat, validation_points[,<span class="fu">c</span>(<span class="st">"x"</span>,<span class="st">"y"</span>)])<span class="sc">$</span>predicted</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 4: Prepare data for the confusion matrix (must be factors)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 4: Prepare data for the confusion matrix</span></span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>validation_data <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(validation_points)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>validation_data<span class="sc">$</span>predicted <span class="ot">&lt;-</span> <span class="fu">factor</span>(validation_data<span class="sc">$</span>predicted, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Unsuitable"</span>, <span class="st">"Suitable"</span>))</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>validation_data<span class="sc">$</span>actual    <span class="ot">&lt;-</span> <span class="fu">factor</span>(validation_data<span class="sc">$</span>actual,    <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Unsuitable"</span>, <span class="st">"Suitable"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to factors - make sure we have 0/1 values first</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>validation_data<span class="sc">$</span>predicted <span class="ot">&lt;-</span> <span class="fu">factor</span>(validation_data<span class="sc">$</span>predicted, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Unsuitable"</span>, <span class="st">"Suitable"</span>))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>validation_data<span class="sc">$</span>actual    <span class="ot">&lt;-</span> <span class="fu">factor</span>(validation_data<span class="sc">$</span>actual,    <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Unsuitable"</span>, <span class="st">"Suitable"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Now we have our <code>validation_data</code> with “predicted” and “actual” columns. Let’s create the confusion matrix.</p>
@@ -555,9 +574,9 @@ Projected CRS: WGS 84 / UTM zone 12N
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 5: Create and interpret the confusion matrix using caret</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>conf_matrix <span class="ot">&lt;-</span> <span class="fu">confusionMatrix</span>(<span class="at">data =</span> validation_data<span class="sc">$</span>predicted, </span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                               <span class="at">reference =</span> validation_data<span class="sc">$</span>actual,</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                               <span class="at">positive =</span> <span class="st">"Suitable"</span>) <span class="co"># Specify the "positive" class</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>conf_matrix <span class="ot">&lt;-</span> caret<span class="sc">::</span><span class="fu">confusionMatrix</span>(<span class="at">data =</span> validation_data<span class="sc">$</span>predicted, </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">reference =</span> validation_data<span class="sc">$</span>actual,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">positive =</span> <span class="st">"Suitable"</span>)</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the full output</span></span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(conf_matrix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -567,26 +586,26 @@ Projected CRS: WGS 84 / UTM zone 12N
 
             Reference
 Prediction   Unsuitable Suitable
-  Unsuitable        118       15
-  Suitable           33       84
+  Unsuitable        118       22
+  Suitable           26       84
                                           
                Accuracy : 0.808           
                  95% CI : (0.7536, 0.8549)
-    No Information Rate : 0.604           
-    P-Value [Acc &gt; NIR] : 3.631e-12       
+    No Information Rate : 0.576           
+    P-Value [Acc &gt; NIR] : 6.238e-15       
                                           
-                  Kappa : 0.6108          
+                  Kappa : 0.6089          
                                           
- Mcnemar's Test P-Value : 0.01414         
+ Mcnemar's Test P-Value : 0.665           
                                           
-            Sensitivity : 0.8485          
-            Specificity : 0.7815          
-         Pos Pred Value : 0.7179          
-         Neg Pred Value : 0.8872          
-             Prevalence : 0.3960          
+            Sensitivity : 0.7925          
+            Specificity : 0.8194          
+         Pos Pred Value : 0.7636          
+         Neg Pred Value : 0.8429          
+             Prevalence : 0.4240          
          Detection Rate : 0.3360          
-   Detection Prevalence : 0.4680          
-      Balanced Accuracy : 0.8150          
+   Detection Prevalence : 0.4400          
+      Balanced Accuracy : 0.8059          
                                           
        'Positive' Class : Suitable        
                                           </code></pre>
@@ -1074,7 +1093,7 @@ Prediction   Unsuitable Suitable
 <footer class="footer">
   <div class="nav-footer">
     <div class="nav-footer-left">
-<p>Copyright 2025, Max M. Lang</p>
+<p>Created by Max M. Lang</p>
 </div>   
     <div class="nav-footer-center">
       &nbsp;

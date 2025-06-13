@@ -300,28 +300,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <ul class="dropdown-menu" aria-labelledby="nav-menu-course-modules">    
         <li>
     <a class="dropdown-item" href="../modules/module1-essentials.html">
- <span class="dropdown-text">Module 1: R Essentials</span></a>
+ <span class="dropdown-text">Module 1: Mastering R for Spatial Data</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module2-advanced.html">
- <span class="dropdown-text">Module 2: Advanced Operations</span></a>
+ <span class="dropdown-text">Module 2: Advanced Spatial Data Handling and Operations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module3-remote-sensing.html">
- <span class="dropdown-text">Module 3: Remote Sensing</span></a>
+ <span class="dropdown-text">Module 3: Remote Sensing Data for Environmental Epidemiology</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module4-validation.html">
- <span class="dropdown-text">Module 4: Validation Methods</span></a>
+ <span class="dropdown-text">Module 4: Validating Remote Sensed Data with Ground-Truth Observations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module5-modeling.html">
- <span class="dropdown-text">Module 5: Spatial Modeling</span></a>
+ <span class="dropdown-text">Module 5: Analyzing Spatial Clustering</span></a>
   </li>  
         <li><hr class="dropdown-divider"></li>
         <li>
     <a class="dropdown-item" href="../modules/module6-resources.html">
- <span class="dropdown-text">Module 6: Resources &amp; Best Practices</span></a>
+ <span class="dropdown-text">Module 6: References and Further Reading</span></a>
   </li>  
     </ul>
   </li>
@@ -374,7 +374,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Module 5: Analyzing Spatial Clustering</h1>
-<p class="subtitle lead">An Introductory Outlook on Spatial Statistics</p>
+<p class="subtitle lead">An Outlook on Spatial Statistics</p>
 </div>
 
 
@@ -392,7 +392,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>This module introduces several methods for formally exploring and testing for clustering in spatial data. A key question in spatial epidemiology is whether disease cases are clustered together, and if so, where these clusters are located. Identifying non-random patterns can provide crucial insights into disease transmission and help target public health interventions.</p>
-<p>We will explore methods for two main types of spatial data: * <strong>Areal Data:</strong> Analyzing rates or counts within defined boundaries (e.g., states or districts). * <strong>Point Pattern Data:</strong> Analyzing the specific locations of individual case events.</p>
+<p>We will explore methods for two main types of spatial data:</p>
+<p><strong>Areal Data:</strong> Analyzing rates or counts within defined boundaries (e.g., states or districts).</p>
+<p><strong>Point Pattern Data:</strong> Analyzing the specific locations of individual case events.</p>
 <hr>
 <section id="setup-loading-packages" class="level2">
 <h2 class="anchored" data-anchor-id="setup-loading-packages">5.1 Setup: Loading Packages</h2>
@@ -572,7 +574,7 @@ Moran I statistic       Expectation          Variance
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(all_points_ppp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Marked planar point pattern: 340 points
+<pre><code>Marked planar point pattern: 299 points
 Multitype, with levels = case, control 
 window: rectangle = [0, 1] x [0, 1] units</code></pre>
 </div>
@@ -1093,7 +1095,7 @@ realizations: 99</code></pre>
 <footer class="footer">
   <div class="nav-footer">
     <div class="nav-footer-left">
-<p>Copyright 2025, Max M. Lang</p>
+<p>Created by Max M. Lang</p>
 </div>   
     <div class="nav-footer-center">
       &nbsp;

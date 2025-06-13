@@ -300,28 +300,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <ul class="dropdown-menu" aria-labelledby="nav-menu-course-modules">    
         <li>
     <a class="dropdown-item" href="../modules/module1-essentials.html">
- <span class="dropdown-text">Module 1: R Essentials</span></a>
+ <span class="dropdown-text">Module 1: Mastering R for Spatial Data</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module2-advanced.html">
- <span class="dropdown-text">Module 2: Advanced Operations</span></a>
+ <span class="dropdown-text">Module 2: Advanced Spatial Data Handling and Operations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module3-remote-sensing.html">
- <span class="dropdown-text">Module 3: Remote Sensing</span></a>
+ <span class="dropdown-text">Module 3: Remote Sensing Data for Environmental Epidemiology</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module4-validation.html">
- <span class="dropdown-text">Module 4: Validation Methods</span></a>
+ <span class="dropdown-text">Module 4: Validating Remote Sensed Data with Ground-Truth Observations</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../modules/module5-modeling.html">
- <span class="dropdown-text">Module 5: Spatial Modeling</span></a>
+ <span class="dropdown-text">Module 5: Analyzing Spatial Clustering</span></a>
   </li>  
         <li><hr class="dropdown-divider"></li>
         <li>
     <a class="dropdown-item" href="../modules/module6-resources.html">
- <span class="dropdown-text">Module 6: Resources &amp; Best Practices</span></a>
+ <span class="dropdown-text">Module 6: References and Further Reading</span></a>
   </li>  
     </ul>
   </li>
@@ -398,9 +398,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>In Module 1, we mastered the essentials: loading, inspecting, and creating basic visualizations of vector and raster data. Now, we move beyond displaying data to truly <em>analyzing</em> it by exploring the relationships between different spatial datasets.</p>
-<p>This module covers the core data wrangling operations that are the workhorses of any real-world geospatial analysis. These techniques are what allow an epidemiologist to connect different pieces of the puzzle—for example, linking patient cases to the environmental characteristics of their local area, or calculating the population within a certain distance of a health facility.</p>
-<p>By the end of this notebook, you will be able to: 1. Combine vector datasets based on their spatial location using <strong>Spatial Joins</strong>. 2. Create areas of interest around features using <strong>Buffering</strong>. 3. Perform powerful geometric operations like <strong>Intersection</strong> and <strong>Union</strong>. 4. Handle multi-layered raster data and perform <strong>Raster Calculations</strong> (Map Algebra). 5. Link raster and vector data by calculating <strong>Zonal Statistics</strong>, a cornerstone of environmental epidemiology. 6. Confidently manage and transform <strong>Coordinate Reference Systems (CRS)</strong>. 7. Create stunning <strong>2D and 3D visualizations</strong> and maps from elevation data using the <code>rayshader</code> package.</p>
+<p>In Module 1, we learned the essentials: loading, inspecting, and creating basic visualizations of vector and raster data. Now, we move beyond displaying data to truly <em>analyzing</em> it by exploring the relationships between different spatial datasets.</p>
+<p>This module covers the core data wrangling operations that are the workhorses of any real-world geospatial analysis.</p>
+<p>By the end of this notebook, you will be able to:</p>
+<ol type="1">
+<li><p>Combine vector datasets based on their spatial location using <strong>Spatial Joins</strong>.</p></li>
+<li><p>Create areas of interest around features using <strong>Buffering</strong>.</p></li>
+<li><p>Perform powerful geometric operations like <strong>Intersection</strong> and <strong>Union</strong>.</p></li>
+<li><p>Handle multi-layered raster data and perform <strong>Raster Calculations</strong> (Basic Map Algebra).</p></li>
+<li><p>Link raster and vector data by calculating <strong>Zonal Statistics</strong>, a cornerstone of environmental epidemiology.</p></li>
+<li><p>Confidently manage and transform <strong>Coordinate Reference Systems (CRS)</strong>.</p></li>
+<li><p>Create stunning <strong>2D and 3D visualizations</strong> and maps from elevation data using the <code>rayshader</code> package.</p></li>
+</ol>
 <hr>
 <section id="setup-loading-packages-and-installation" class="level2">
 <h2 class="anchored" data-anchor-id="setup-loading-packages-and-installation">2.1 Setup: Loading Packages and Installation</h2>
@@ -1568,7 +1577,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <footer class="footer">
   <div class="nav-footer">
     <div class="nav-footer-left">
-<p>Copyright 2025, Max M. Lang</p>
+<p>Created by Max M. Lang</p>
 </div>   
     <div class="nav-footer-center">
       &nbsp;
