@@ -357,6 +357,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#advanced-vector-data-techniques-with-sf" id="toc-advanced-vector-data-techniques-with-sf" class="nav-link" data-scroll-target="#advanced-vector-data-techniques-with-sf">2.2 Advanced Vector Data Techniques with <code>sf</code></a>
   <ul class="collapse">
   <li><a href="#spatial-joins" id="toc-spatial-joins" class="nav-link" data-scroll-target="#spatial-joins">Spatial Joins</a></li>
+  <li><a href="#distance-calculations" id="toc-distance-calculations" class="nav-link" data-scroll-target="#distance-calculations">Distance Calculations</a></li>
+  <li><a href="#why-distance-calculation-matters" id="toc-why-distance-calculation-matters" class="nav-link" data-scroll-target="#why-distance-calculation-matters">Why Distance Calculation Matters</a></li>
   <li><a href="#buffering" id="toc-buffering" class="nav-link" data-scroll-target="#buffering">Buffering</a></li>
   <li><a href="#geometric-operations" id="toc-geometric-operations" class="nav-link" data-scroll-target="#geometric-operations">Geometric Operations</a></li>
   <li><a href="#exercise-1-advanced-vector-operations" id="toc-exercise-1-advanced-vector-operations" class="nav-link" data-scroll-target="#exercise-1-advanced-vector-operations"><strong>Exercise 1: Advanced Vector Operations</strong></a></li>
@@ -527,6 +529,153 @@ First 10 features:
 </div>
 </div>
 </section>
+<section id="distance-calculations" class="level3">
+<h3 class="anchored" data-anchor-id="distance-calculations">Distance Calculations</h3>
+<p>Before we dive into buffering, it’s important to understand how to calculate distances correctly in spatial data. This is often done wrong or just carelessly even in peer-reviewed publications.</p>
+</section>
+<section id="why-distance-calculation-matters" class="level3">
+<h3 class="anchored" data-anchor-id="why-distance-calculation-matters">Why Distance Calculation Matters</h3>
+<p>When you look at a map on your phone or computer, you’re seeing locations represented by longitude and latitude coordinates. These coordinates work great for showing where things are, but there’s a problem when we try to measure distances between them.</p>
+<section id="the-earth-is-round-maps-are-flat" class="level4">
+<h4 class="anchored" data-anchor-id="the-earth-is-round-maps-are-flat">The Earth is Round, Maps are Flat</h4>
+<p><strong>Earth is a three-dimensional sphere, but our maps and coordinate systems often treat it as if it were flat</strong> (I hope we can all agree on that otherwise <a href="https://flatearth.ws/">check this out</a>. Imagine trying to measure the distance between two cities by laying a ruler on a globe versus measuring on a flat map - you’d get different answers!</p>
+<p>When we use longitude and latitude coordinates directly (called “unprojected” coordinates), we’re essentially pretending the Earth is flat. This creates errors in our distance calculations that can be significant, especially over longer distances.</p>
+</section>
+<section id="understanding-coordinate-reference-systems-crs" class="level4">
+<h4 class="anchored" data-anchor-id="understanding-coordinate-reference-systems-crs">Understanding Coordinate Reference Systems (CRS)</h4>
+<p>A <strong>Coordinate Reference System (CRS)</strong> is like a mathematical recipe that tells us how to translate locations on the curved Earth onto a flat map or computer screen. There are two main types:</p>
+<ol type="1">
+<li><strong>Geographic CRS</strong> (like WGS84): Uses longitude and latitude degrees
+<ul>
+<li>Good for: Showing locations globally</li>
+<li>Problem for distances: Treats Earth as flat when calculating</li>
+</ul></li>
+<li><strong>Projected CRS</strong> (like UTM): Converts the curved Earth to a flat surface for a specific region
+<ul>
+<li>Good for: Accurate distance and area calculations</li>
+<li>Trade-off: Only accurate for the specific region it’s designed for</li>
+</ul></li>
+</ol>
+</section>
+<section id="practical-example-measuring-distance-in-uganda" class="level4">
+<h4 class="anchored" data-anchor-id="practical-example-measuring-distance-in-uganda">Practical Example: Measuring Distance in Uganda</h4>
+<p>Let’s see this in action by measuring the distance between Kampala and Pakwach in Uganda:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show/Hide Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load required libraries</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(geosphere)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(units)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create points using longitude/latitude coordinates (WGS84)</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>kampala <span class="ot">&lt;-</span> <span class="fu">st_point</span>(<span class="fu">c</span>(<span class="fl">32.5825</span>, <span class="fl">0.3476</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_sfc</span>(<span class="at">crs =</span> <span class="dv">4326</span>) <span class="co"># 4326 is the code for WGS84</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>pakwach <span class="ot">&lt;-</span> <span class="fu">st_point</span>(<span class="fu">c</span>(<span class="fl">31.4944</span>, <span class="fl">2.4613</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_sfc</span>(<span class="at">crs =</span> <span class="dv">4326</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="method-1-the-wrong-way-unprojected" class="level4">
+<h4 class="anchored" data-anchor-id="method-1-the-wrong-way-unprojected">Method 1: The Wrong Way (Unprojected)</h4>
+<div class="cell">
+<details class="code-fold">
+<summary>Show/Hide Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate distance directly with longitude/latitude - DON'T DO THIS!</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>unprojected_distance <span class="ot">&lt;-</span> <span class="fu">st_distance</span>(kampala, pakwach)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>unprojected_distance</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Units: [m]
+         [,1]
+[1,] 264327.5</code></pre>
+</div>
+</div>
+<p>This gives us 264.3 km, but <strong>this is incorrect</strong> because it treats the Earth as flat.</p>
+</section>
+<section id="method-2-the-right-way-projected" class="level4">
+<h4 class="anchored" data-anchor-id="method-2-the-right-way-projected">Method 2: The Right Way (Projected)</h4>
+<div class="cell">
+<details class="code-fold">
+<summary>Show/Hide Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Project both points to UTM Zone 36N (appropriate for Uganda)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>kampala_projected <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(kampala, <span class="dv">32636</span>) <span class="co"># 32636 is UTM Zone 36N</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>pakwach_projected <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(pakwach, <span class="dv">32636</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Now calculate distance - this is correct!</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>projected_distance <span class="ot">&lt;-</span> <span class="fu">st_distance</span>(kampala_projected, pakwach_projected)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>projected_distance</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Units: [m]
+         [,1]
+[1,] 263161.1</code></pre>
+</div>
+</div>
+<p>This gives us 263.2 km, which is the accurate distance.</p>
+</section>
+<section id="method-3-alternative-approach-with-geosphere" class="level4">
+<h4 class="anchored" data-anchor-id="method-3-alternative-approach-with-geosphere">Method 3: Alternative Approach with Geosphere</h4>
+<div class="cell">
+<details class="code-fold">
+<summary>Show/Hide Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract coordinates for geosphere package</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>kampala_coords <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(kampala)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>pakwach_coords <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(pakwach)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate distance using Vincenty formula (accounts for Earth's curvature)</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>vincenty_distance <span class="ot">&lt;-</span> <span class="fu">distVincentyEllipsoid</span>(kampala_coords, pakwach_coords)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>vincenty_distance_km <span class="ot">&lt;-</span> vincenty_distance <span class="sc">/</span> <span class="dv">1000</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">paste</span>(<span class="st">"Vincenty distance:"</span>, <span class="fu">round</span>(vincenty_distance_km, <span class="dv">2</span>), <span class="st">"km"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Vincenty distance: 263.23 km"</code></pre>
+</div>
+</div>
+</section>
+<section id="comparing-all-methods" class="level4">
+<h4 class="anchored" data-anchor-id="comparing-all-methods">Comparing All Methods</h4>
+<div class="cell">
+<details class="code-fold">
+<summary>Show/Hide Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert units for easier comparison</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>unprojected_km <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">set_units</span>(unprojected_distance, km))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>projected_km <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">set_units</span>(projected_distance, km))</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">"Unprojected (WRONG)"</span>, </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Projected UTM (CORRECT)"</span>, </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Vincenty Ellipsoid (CORRECT)"</span>),</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Distance_km =</span> <span class="fu">c</span>(unprojected_km, </span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                  projected_km,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                  vincenty_distance_km),</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">Difference_from_correct =</span> <span class="fu">c</span>(unprojected_km <span class="sc">-</span> projected_km,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>                             <span class="dv">0</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                             vincenty_distance_km <span class="sc">-</span> projected_km)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>comparison <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(Method, Distance_km)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>                        Method Distance_km
+1          Unprojected (WRONG)    264.3275
+2      Projected UTM (CORRECT)    263.1611
+3 Vincenty Ellipsoid (CORRECT)    263.2252</code></pre>
+</div>
+</div>
+</section>
+<section id="key-takeaways" class="level4">
+<h4 class="anchored" data-anchor-id="key-takeaways">Key Takeaways</h4>
+<ul>
+<li><p><strong>Always project your data</strong> before calculating distances for accuracy</p></li>
+<li><p><strong>Use the correct regional CRS</strong> for your research</p></li>
+<li><p>The difference might seem small in our example (~1 km), but errors compound over longer distances and in complex analyses</p></li>
+<li><p><strong>Consistency matters</strong> - using the same CRS across all your analyses ensures comparable results</p></li>
+</ul>
+</section>
+</section>
 <section id="buffering" class="level3">
 <h3 class="anchored" data-anchor-id="buffering">Buffering</h3>
 <p>Buffering creates a new polygon around a spatial feature at a specified distance. This is useful for modeling zones of influence or potential exposure.</p>
@@ -536,15 +685,15 @@ First 10 features:
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load Zion National Park data</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>zion_gpkg_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">"vector/zion_points.gpkg"</span>, <span class="at">package =</span> <span class="st">"spDataLarge"</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>zion_boundary_gpkg_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">"vector/zion.gpkg"</span>, <span class="at">package =</span> <span class="st">"spDataLarge"</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>zion_boundary <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">read_sf</span>(zion_boundary_gpkg_path)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>zion_points <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">read_sf</span>(zion_gpkg_path)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># First, CHECK THE CRS! The units are meters. Perfect for buffering!</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(zion_points)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load Zion National Park data</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>zion_gpkg_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">"vector/zion_points.gpkg"</span>, <span class="at">package =</span> <span class="st">"spDataLarge"</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>zion_boundary_gpkg_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">"vector/zion.gpkg"</span>, <span class="at">package =</span> <span class="st">"spDataLarge"</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>zion_boundary <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">read_sf</span>(zion_boundary_gpkg_path)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>zion_points <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">read_sf</span>(zion_gpkg_path)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># First, CHECK THE CRS! The units are meters. Perfect for buffering!</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(zion_points)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Coordinate Reference System:
@@ -580,14 +729,14 @@ GEOGCRS["WGS 84",
 </div>
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Let's create a 1.5 kilometer (1500 meter) buffer around these points</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>visitor_center_buffers <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(zion_points, <span class="at">dist =</span> <span class="dv">1500</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Let's map the park boundary, the points, and their buffers</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(zion_boundary) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"lightgreen"</span>, <span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span> <span class="fu">tm_borders</span>() <span class="sc">+</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(zion_points) <span class="sc">+</span> <span class="fu">tm_dots</span>(<span class="at">col=</span><span class="st">"red"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(visitor_center_buffers) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"blue"</span>, <span class="at">alpha=</span><span class="fl">0.4</span>, <span class="at">border.col =</span> <span class="st">"darkblue"</span>) <span class="sc">+</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"1.5km Buffers around Visitor Centers"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Let's create a 1.5 kilometer (1500 meter) buffer around these points</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>visitor_center_buffers <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(zion_points, <span class="at">dist =</span> <span class="dv">1500</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Let's map the park boundary, the points, and their buffers</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(zion_boundary) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"lightgreen"</span>, <span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span> <span class="fu">tm_borders</span>() <span class="sc">+</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(zion_points) <span class="sc">+</span> <span class="fu">tm_dots</span>(<span class="at">col=</span><span class="st">"red"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(visitor_center_buffers) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"blue"</span>, <span class="at">alpha=</span><span class="fl">0.4</span>, <span class="at">border.col =</span> <span class="st">"darkblue"</span>) <span class="sc">+</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"1.5km Buffers around Visitor Centers"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -605,17 +754,17 @@ GEOGCRS["WGS 84",
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the western states from Module 1</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"us_states"</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>western_states <span class="ot">&lt;-</span> us_states <span class="sc">%&gt;%</span> <span class="fu">filter</span>(REGION <span class="sc">==</span> <span class="st">"West"</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Dissolve all the internal boundaries into a single feature</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>west_region_boundary <span class="ot">&lt;-</span> <span class="fu">st_union</span>(western_states)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the original states and the single dissolved boundary</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>plot1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(western_states) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="st">"NAME"</span>, <span class="at">legend.show =</span> <span class="cn">FALSE</span>) <span class="sc">+</span> <span class="fu">tm_layout</span>(<span class="at">title=</span><span class="st">"Original States"</span>)</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>plot2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(west_region_boundary) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"lightblue"</span>) <span class="sc">+</span> <span class="fu">tm_layout</span>(<span class="at">title=</span><span class="st">"Union of States"</span>)</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(plot1, plot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the western states from Module 1</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"us_states"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>western_states <span class="ot">&lt;-</span> us_states <span class="sc">%&gt;%</span> <span class="fu">filter</span>(REGION <span class="sc">==</span> <span class="st">"West"</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Dissolve all the internal boundaries into a single feature</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>west_region_boundary <span class="ot">&lt;-</span> <span class="fu">st_union</span>(western_states)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the original states and the single dissolved boundary</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>plot1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(western_states) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="st">"NAME"</span>, <span class="at">legend.show =</span> <span class="cn">FALSE</span>) <span class="sc">+</span> <span class="fu">tm_layout</span>(<span class="at">title=</span><span class="st">"Original States"</span>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>plot2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(west_region_boundary) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"lightblue"</span>) <span class="sc">+</span> <span class="fu">tm_layout</span>(<span class="at">title=</span><span class="st">"Union of States"</span>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(plot1, plot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -640,7 +789,7 @@ GEOGCRS["WGS 84",
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -648,15 +797,15 @@ GEOGCRS["WGS 84",
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects from previous tasks</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>, <span class="at">package =</span> <span class="st">"maps"</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(brazil_cities)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects from previous tasks</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>, <span class="at">package =</span> <span class="st">"maps"</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(brazil_cities)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Simple feature collection with 6 features and 14 fields
@@ -700,7 +849,7 @@ Geodetic CRS:  WGS 84
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -708,19 +857,19 @@ Geodetic CRS:  WGS 84
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects from previous tasks</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>, <span class="at">package =</span> <span class="st">"maps"</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>brazil_cities_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(brazil_cities, <span class="st">"EPSG:5880"</span>)</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>city_buffers_proj <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(brazil_cities_proj, <span class="at">dist =</span> <span class="dv">50000</span>)</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(city_buffers_proj)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects from previous tasks</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>, <span class="at">package =</span> <span class="st">"maps"</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>brazil_cities_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(brazil_cities, <span class="st">"EPSG:5880"</span>)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>city_buffers_proj <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(brazil_cities_proj, <span class="at">dist =</span> <span class="dv">50000</span>)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(city_buffers_proj)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Simple feature collection with 6 features and 14 fields
@@ -764,7 +913,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -772,21 +921,21 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects from previous tasks</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>brazil_cities_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(brazil_cities, <span class="st">"EPSG:5880"</span>)</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>city_buffers_proj <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(brazil_cities_proj, <span class="at">dist =</span> <span class="dv">50000</span>)</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>brazil_poly_proj <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> </span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="st">"EPSG:5880"</span>)</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>city_buffers_intersect <span class="ot">&lt;-</span> <span class="fu">st_intersection</span>(city_buffers_proj, brazil_poly_proj)</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(city_buffers_intersect)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects from previous tasks</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>brazil_cities_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(brazil_cities, <span class="st">"EPSG:5880"</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>city_buffers_proj <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(brazil_cities_proj, <span class="at">dist =</span> <span class="dv">50000</span>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>brazil_poly_proj <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> </span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="st">"EPSG:5880"</span>)</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>city_buffers_intersect <span class="ot">&lt;-</span> <span class="fu">st_intersection</span>(city_buffers_proj, brazil_poly_proj)</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(city_buffers_intersect)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Simple feature collection with 6 features and 24 fields
@@ -844,7 +993,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -852,23 +1001,23 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>brazil_cities_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(brazil_cities, <span class="st">"EPSG:5880"</span>)</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>city_buffers_proj <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(brazil_cities_proj, <span class="at">dist =</span> <span class="dv">50000</span>)</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>brazil_poly_proj <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> </span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="st">"EPSG:5880"</span>)</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>city_buffers_intersect <span class="ot">&lt;-</span> <span class="fu">st_intersection</span>(city_buffers_proj, brazil_poly_proj)</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the map</span></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(brazil_poly_proj) <span class="sc">+</span> <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(city_buffers_intersect) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"red"</span>, <span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"50km Buffer Zones around Major Brazilian Cities"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create all necessary objects</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world.cities"</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>world_cities_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(world.cities, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"long"</span>, <span class="st">"lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>cities_in_countries <span class="ot">&lt;-</span> <span class="fu">st_join</span>(world_cities_sf, world)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>brazil_cities <span class="ot">&lt;-</span> cities_in_countries <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>brazil_cities_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(brazil_cities, <span class="st">"EPSG:5880"</span>)</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>city_buffers_proj <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(brazil_cities_proj, <span class="at">dist =</span> <span class="dv">50000</span>)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>brazil_poly_proj <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> </span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(name_long <span class="sc">==</span> <span class="st">"Brazil"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="st">"EPSG:5880"</span>)</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>city_buffers_intersect <span class="ot">&lt;-</span> <span class="fu">st_intersection</span>(city_buffers_proj, brazil_poly_proj)</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the map</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(brazil_poly_proj) <span class="sc">+</span> <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(city_buffers_intersect) <span class="sc">+</span> <span class="fu">tm_polygons</span>(<span class="at">col=</span><span class="st">"red"</span>, <span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"50km Buffer Zones around Major Brazilian Cities"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -893,23 +1042,23 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the data and calculate the annual mean in Celsius</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>global_tmax <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"tmax"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path) <span class="sc">/</span> <span class="dv">10</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Access individual layers (months) using [[...]]</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>jan_tmax <span class="ot">&lt;-</span> global_tmax[[<span class="dv">1</span>]]</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>jul_tmax <span class="ot">&lt;-</span> global_tmax[[<span class="dv">7</span>]]</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform the calculation</span></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>annual_range <span class="ot">&lt;-</span> jan_tmax <span class="sc">-</span> jul_tmax</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Rename the layer for the plot legend</span></span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(annual_range) <span class="ot">&lt;-</span> <span class="st">"Temp Range (°C)"</span></span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the result</span></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(annual_range) <span class="sc">+</span> <span class="fu">tm_raster</span>(<span class="at">palette=</span><span class="st">"RdBu"</span>, <span class="at">style=</span><span class="st">"cont"</span>) <span class="sc">+</span></span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Annual Max Temp Range (Jan - July)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the data and calculate the annual mean in Celsius</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>global_tmax <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"tmax"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path) <span class="sc">/</span> <span class="dv">10</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Access individual layers (months) using [[...]]</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>jan_tmax <span class="ot">&lt;-</span> global_tmax[[<span class="dv">1</span>]]</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>jul_tmax <span class="ot">&lt;-</span> global_tmax[[<span class="dv">7</span>]]</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform the calculation</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>annual_range <span class="ot">&lt;-</span> jan_tmax <span class="sc">-</span> jul_tmax</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Rename the layer for the plot legend</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(annual_range) <span class="ot">&lt;-</span> <span class="st">"Temp Range (°C)"</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the result</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(annual_range) <span class="sc">+</span> <span class="fu">tm_raster</span>(<span class="at">palette=</span><span class="st">"RdBu"</span>, <span class="at">style=</span><span class="st">"cont"</span>) <span class="sc">+</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Annual Max Temp Range (Jan - July)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -927,27 +1076,27 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Get the polygon data (zones)</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Get the raster data (values)</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># We will download a coarse global elevation raster</span></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>() <span class="co"># Ensure temp_path is defined</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Perform the zonal extraction</span></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>mean_elev <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">extract</span>(elevation, sa_countries, <span class="at">fun =</span> <span class="st">"mean"</span>, <span class="at">ID =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Combine the results with the polygon data</span></span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>sa_countries_with_elev <span class="ot">&lt;-</span> <span class="fu">cbind</span>(sa_countries, mean_elev)</span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Map the result</span></span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sa_countries_with_elev) <span class="sc">+</span></span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"wc2.1_10m_elev"</span>, </span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>              <span class="at">title =</span> <span class="st">"Mean Elevation (m)"</span>, </span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">palette =</span> <span class="st">"YlOrBr"</span>) <span class="sc">+</span></span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Mean Elevation by Country in South America"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Get the polygon data (zones)</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Get the raster data (values)</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="co"># We will download a coarse global elevation raster</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>() <span class="co"># Ensure temp_path is defined</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Perform the zonal extraction</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>mean_elev <span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">extract</span>(elevation, sa_countries, <span class="at">fun =</span> <span class="st">"mean"</span>, <span class="at">ID =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Combine the results with the polygon data</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>sa_countries_with_elev <span class="ot">&lt;-</span> <span class="fu">cbind</span>(sa_countries, mean_elev)</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Map the result</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(sa_countries_with_elev) <span class="sc">+</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">col =</span> <span class="st">"wc2.1_10m_elev"</span>, </span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>              <span class="at">title =</span> <span class="st">"Mean Elevation (m)"</span>, </span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">palette =</span> <span class="st">"YlOrBr"</span>) <span class="sc">+</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Mean Elevation by Country in South America"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -969,33 +1118,33 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Get Data: The `montereybay` dataset is already a matrix.</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>elmat <span class="ot">&lt;-</span> montereybay</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Create a 2D map by layering shades</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Start with a texture layer based on elevation</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>map_base <span class="ot">&lt;-</span> elmat <span class="sc">%&gt;%</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sphere_shade</span>(<span class="at">texture =</span> <span class="st">"imhof1"</span>)</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Add lambertian and ambient shadow layers</span></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>map_with_shadows <span class="ot">&lt;-</span> map_base <span class="sc">%&gt;%</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ray_shade</span>(elmat, <span class="at">zscale =</span> <span class="dv">50</span>, <span class="at">lambert =</span> <span class="cn">FALSE</span>), <span class="fl">0.5</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ambient_shade</span>(elmat, <span class="at">zscale =</span> <span class="dv">50</span>), <span class="dv">0</span>)</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the final 2D map</span></span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_map</span>(map_with_shadows)</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Create a 3D Map with a water layer</span></span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="co"># In plot_3d, we can add water directly.</span></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="co"># The waterdepth is 0, since that's sea level in this dataset.</span></span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>map_with_shadows <span class="sc">%&gt;%</span></span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_3d</span>(elmat, <span class="at">zscale =</span> <span class="dv">50</span>, <span class="at">fov =</span> <span class="dv">0</span>, <span class="at">theta =</span> <span class="sc">-</span><span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">45</span>, </span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>          <span class="at">windowsize =</span> <span class="fu">c</span>(<span class="dv">1000</span>, <span class="dv">800</span>), <span class="at">zoom =</span> <span class="fl">0.75</span>,</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>          <span class="at">water =</span> <span class="cn">TRUE</span>, <span class="at">waterdepth =</span> <span class="dv">0</span>, <span class="at">wateralpha =</span> <span class="fl">0.5</span>, <span class="at">watercolor =</span> <span class="st">"lightblue"</span>,</span>
-<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>          <span class="at">waterlinecolor =</span> <span class="st">"white"</span>, <span class="at">waterlinealpha =</span> <span class="fl">0.5</span>)</span>
-<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Use render_snapshot() to capture the current 3D view</span></span>
-<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a><span class="fu">render_snapshot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Get Data: The `montereybay` dataset is already a matrix.</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>elmat <span class="ot">&lt;-</span> montereybay</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Create a 2D map by layering shades</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Start with a texture layer based on elevation</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>map_base <span class="ot">&lt;-</span> elmat <span class="sc">%&gt;%</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sphere_shade</span>(<span class="at">texture =</span> <span class="st">"imhof1"</span>)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Add lambertian and ambient shadow layers</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>map_with_shadows <span class="ot">&lt;-</span> map_base <span class="sc">%&gt;%</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ray_shade</span>(elmat, <span class="at">zscale =</span> <span class="dv">50</span>, <span class="at">lambert =</span> <span class="cn">FALSE</span>), <span class="fl">0.5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ambient_shade</span>(elmat, <span class="at">zscale =</span> <span class="dv">50</span>), <span class="dv">0</span>)</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the final 2D map</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_map</span>(map_with_shadows)</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Create a 3D Map with a water layer</span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="co"># In plot_3d, we can add water directly.</span></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="co"># The waterdepth is 0, since that's sea level in this dataset.</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>map_with_shadows <span class="sc">%&gt;%</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_3d</span>(elmat, <span class="at">zscale =</span> <span class="dv">50</span>, <span class="at">fov =</span> <span class="dv">0</span>, <span class="at">theta =</span> <span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">50</span>, </span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>          <span class="at">windowsize =</span> <span class="fu">c</span>(<span class="dv">1000</span>, <span class="dv">800</span>), <span class="at">zoom =</span> <span class="fl">0.75</span>,</span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>          <span class="at">water =</span> <span class="cn">TRUE</span>, <span class="at">waterdepth =</span> <span class="dv">0</span>, <span class="at">wateralpha =</span> <span class="fl">0.5</span>, <span class="at">watercolor =</span> <span class="st">"lightblue"</span>,</span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>          <span class="at">waterlinecolor =</span> <span class="st">"white"</span>, <span class="at">waterlinealpha =</span> <span class="fl">0.5</span>)</span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Use render_snapshot() to capture the current 3D view</span></span>
+<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a><span class="fu">render_snapshot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -1026,7 +1175,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -1034,15 +1183,15 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create necessary objects</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>sa_elevation_raster <span class="ot">&lt;-</span> <span class="fu">crop</span>(elevation, sa_countries)</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix <span class="ot">&lt;-</span> <span class="fu">raster_to_matrix</span>(sa_elevation_raster)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create necessary objects</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>sa_elevation_raster <span class="ot">&lt;-</span> <span class="fu">crop</span>(elevation, sa_countries)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix <span class="ot">&lt;-</span> <span class="fu">raster_to_matrix</span>(sa_elevation_raster)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -1058,7 +1207,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -1066,20 +1215,20 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create matrix from previous task</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>sa_elevation_raster <span class="ot">&lt;-</span> <span class="fu">crop</span>(elevation, sa_countries)</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix <span class="ot">&lt;-</span> <span class="fu">raster_to_matrix</span>(sa_elevation_raster)</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix <span class="sc">%&gt;%</span></span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sphere_shade</span>(<span class="at">texture =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_water</span>(<span class="fu">detect_water</span>(sa_elevation_matrix), <span class="at">color =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ray_shade</span>(sa_elevation_matrix, <span class="at">zscale =</span> <span class="dv">3</span>), <span class="fl">0.5</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_map</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create matrix from previous task</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>sa_elevation_raster <span class="ot">&lt;-</span> <span class="fu">crop</span>(elevation, sa_countries)</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix <span class="ot">&lt;-</span> <span class="fu">raster_to_matrix</span>(sa_elevation_raster)</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Task</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix <span class="sc">%&gt;%</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sphere_shade</span>(<span class="at">texture =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_water</span>(<span class="fu">detect_water</span>(sa_elevation_matrix), <span class="at">color =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ray_shade</span>(sa_elevation_matrix, <span class="at">zscale =</span> <span class="dv">3</span>), <span class="fl">0.5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_map</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -1102,7 +1251,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your code here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -1110,32 +1259,32 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create objects from previous task</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>sa_elevation_raster <span class="ot">&lt;-</span> <span class="fu">crop</span>(elevation, sa_countries)</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep the original matrix with NAs for water detection</span></span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix_raw <span class="ot">&lt;-</span> <span class="fu">raster_to_matrix</span>(sa_elevation_raster)</span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix_filled <span class="ot">&lt;-</span> sa_elevation_matrix_raw</span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>min_elev <span class="ot">&lt;-</span> <span class="fu">min</span>(sa_elevation_matrix_filled, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix_filled[<span class="fu">is.na</span>(sa_elevation_matrix_filled)] <span class="ot">&lt;-</span> min_elev</span>
-<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the map object using the 'filled' matrix for shading</span></span>
-<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a><span class="co"># but the 'raw' matrix for detecting water.</span></span>
-<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>sa_map <span class="ot">&lt;-</span> sa_elevation_matrix_filled <span class="sc">%&gt;%</span></span>
-<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sphere_shade</span>(<span class="at">texture =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_water</span>(<span class="fu">detect_water</span>(sa_elevation_matrix_raw), <span class="at">color =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ray_shade</span>(sa_elevation_matrix_filled, <span class="at">zscale =</span> <span class="dv">3</span>), <span class="fl">0.5</span>)</span>
-<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Task: Plot in 3D using the 'filled' matrix</span></span>
-<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>sa_map <span class="sc">%&gt;%</span></span>
-<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_3d</span>(sa_elevation_matrix_filled, <span class="at">zscale =</span> <span class="dv">50</span>, <span class="at">fov =</span> <span class="dv">0</span>, <span class="at">theta =</span> <span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">30</span>, </span>
-<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>          <span class="at">windowsize =</span> <span class="fu">c</span>(<span class="dv">1000</span>, <span class="dv">800</span>), <span class="at">zoom =</span> <span class="fl">0.7</span>)</span>
-<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a><span class="fu">render_snapshot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create objects from previous task</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"world"</span>)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>sa_countries <span class="ot">&lt;-</span> world <span class="sc">%&gt;%</span> <span class="fu">filter</span>(continent <span class="sc">==</span> <span class="st">"South America"</span>)</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>temp_path <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>elevation <span class="ot">&lt;-</span> geodata<span class="sc">::</span><span class="fu">worldclim_global</span>(<span class="at">var =</span> <span class="st">"elev"</span>, <span class="at">res =</span> <span class="dv">10</span>, <span class="at">path =</span> temp_path)</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>sa_elevation_raster <span class="ot">&lt;-</span> <span class="fu">crop</span>(elevation, sa_countries)</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep the original matrix with NAs for water detection</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix_raw <span class="ot">&lt;-</span> <span class="fu">raster_to_matrix</span>(sa_elevation_raster)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix_filled <span class="ot">&lt;-</span> sa_elevation_matrix_raw</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>min_elev <span class="ot">&lt;-</span> <span class="fu">min</span>(sa_elevation_matrix_filled, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>sa_elevation_matrix_filled[<span class="fu">is.na</span>(sa_elevation_matrix_filled)] <span class="ot">&lt;-</span> min_elev</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the map object using the 'filled' matrix for shading</span></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a><span class="co"># but the 'raw' matrix for detecting water.</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>sa_map <span class="ot">&lt;-</span> sa_elevation_matrix_filled <span class="sc">%&gt;%</span></span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sphere_shade</span>(<span class="at">texture =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_water</span>(<span class="fu">detect_water</span>(sa_elevation_matrix_raw), <span class="at">color =</span> <span class="st">"imhof4"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_shadow</span>(<span class="fu">ray_shade</span>(sa_elevation_matrix_filled, <span class="at">zscale =</span> <span class="dv">3</span>), <span class="fl">0.5</span>)</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Task: Plot in 3D using the 'filled' matrix</span></span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>sa_map <span class="sc">%&gt;%</span></span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_3d</span>(sa_elevation_matrix_filled, <span class="at">zscale =</span> <span class="dv">50</span>, <span class="at">fov =</span> <span class="dv">0</span>, <span class="at">theta =</span> <span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">30</span>, </span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>          <span class="at">windowsize =</span> <span class="fu">c</span>(<span class="dv">1000</span>, <span class="dv">800</span>), <span class="at">zoom =</span> <span class="fl">0.7</span>)</span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a><span class="fu">render_snapshot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
