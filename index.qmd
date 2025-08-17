@@ -17,17 +17,6 @@ page-layout: full
   text-align: center;
 }
 
-.hero-banner::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(17, 24, 39, 0.6); /* Semi-transparent dark overlay */
-  z-index: 1;
-}
-
 .hero-banner .quarto-title-block {
   position: relative;
   z-index: 2;
@@ -79,7 +68,11 @@ page-layout: full
 </style>
 
 <div class="hero-banner" style="background-image: url('nordlinger-ries.png');">
-  </div>
+</div>
+
+<div class="hero-caption" style="text-align: center; margin-bottom: 2rem; font-style: italic; color: #666;">
+3D Visualization of Nördlinger Ries
+</div>
 
 
 <div class="content-section container">
