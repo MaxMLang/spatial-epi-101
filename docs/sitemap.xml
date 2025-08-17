@@ -1,7 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://MaxMLang.github.io/spatial-epi-101/modules/module5-modeling.html</loc>
+    <lastmod>2025-08-17T20:38:20.271Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MaxMLang.github.io/spatial-epi-101/modules/module3-remote-sensing.html</loc>
+    <lastmod>2025-08-17T20:38:20.271Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MaxMLang.github.io/spatial-epi-101/modules/module6-resources.html</loc>
+    <lastmod>2025-08-17T20:38:20.271Z</lastmod>
+  </url>
+  <url>
     <loc>https://MaxMLang.github.io/spatial-epi-101/about.html</loc>
-    <lastmod>2025-08-17T20:30:19.429Z</lastmod>
+    <lastmod>2025-08-17T20:38:20.263Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MaxMLang.github.io/spatial-epi-101/index.html</loc>
+    <lastmod>2025-08-17T20:38:20.271Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MaxMLang.github.io/spatial-epi-101/modules/module4-validation.html</loc>
+    <lastmod>2025-08-17T20:38:20.271Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MaxMLang.github.io/spatial-epi-101/modules/module2-advanced.html</loc>
+    <lastmod>2025-08-17T20:38:20.271Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MaxMLang.github.io/spatial-epi-101/modules/module1-essentials.html</loc>
+    <lastmod>2025-08-17T20:38:20.271Z</lastmod>
   </url>
 </urlset>
