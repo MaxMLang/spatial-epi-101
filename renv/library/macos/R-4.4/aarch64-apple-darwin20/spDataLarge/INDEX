@@ -1,0 +1,25 @@
+bristol_ways            Datasets providing a snapshot of Bristol's
+                        transport system
+census_de               Datasets providing building blocks for a
+                        location analysis
+comm                    Community matrix of the Mt. Mongón
+dem.tif                 Digital elevation model (DEM) of the Mongón
+                        study area.
+ep.tif                  Environmental predictors
+landsat.tif             Dataset landsat
+london_streets          Streets of london downloaded from OSM
+lsl                     Landslide dataset from Southern Ecuador
+ndvi.tif                Normalized difference vegetation index for the
+                        Mongón study area.
+nlcd.tif                Dataset nlcd
+nlcd2011.tif            Dataset nlcd2011
+nz_elev.tif             New Zeleand elevation raster data
+pol_pres15              Polish election data 2015
+random_points           Random points.
+srtm.tif                Dataset srtm
+study_area              Mask of the study area on the Mount Mongón
+ta.tif                  Terrain attributes of the landslide dataset
+                        from Southern Ecuador
+zion.gpkg               Dataset zion
+zion_points             Point vector data
+zion_points.gpkg        Point vector data
