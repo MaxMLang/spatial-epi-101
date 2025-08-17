@@ -3,7 +3,7 @@
 [![Course Website](https://img.shields.io/badge/Course-Website-brightgreen.svg)](https://maxmlang.github.io/spatial-epi-101/)
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/MaxMLang/spatial-epi-101/refs/heads/main/nordlinger_ries.png" alt="Map of the Nördlinger Ries crater" width="50%">
+  <img src="https://raw.githubusercontent.com/MaxMLang/spatial-epi-101/refs/heads/main/nordlinger-ries.png" alt="Map of the Nördlinger Ries crater" width="50%">
 </div>
 
 This is the Github Repo for "spatial-epi-101". This repo hosts the materials for a course designed to equip you with the essential skills for analyzing, visualizing, and interpreting spatial health data using R.
