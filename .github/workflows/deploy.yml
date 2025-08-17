@@ -44,9 +44,10 @@ jobs:
           sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev libgdal-dev libproj-dev libgeos-dev libudunits2-dev
 
       - name: Install Quarto
-        uses: quarto-dev/quarto-actions/install@v1
-        with:
-          version: latest
+        run: |
+          wget -q https://github.com/quarto-dev/quarto-cli/releases/download/v1.4.549/quarto-1.4.549-linux-amd64.deb
+          sudo dpkg -i quarto-1.4.549-linux-amd64.deb
+          quarto --version
 
       - name: Cache Quarto packages
         uses: actions/cache@v3
