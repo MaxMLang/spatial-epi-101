@@ -447,7 +447,7 @@ window.Quarto = {
 </header>
 
 
-<p>The goal of this module is to build a rock-solid foundation in handling, manipulating, and visualizing spatial data within the R environment. We will focus on the “tidyverse” approach to spatial analysis, which treats spatial data as a special kind of data frame, making many operations intuitive and powerful.</p>
+<p>The goal of this module is to build a solid foundation in handling, manipulating, and visualizing spatial data in R. We will focus on the “tidyverse” approach to spatial analysis, which treats spatial data as a special kind of data frame, making many operations intuitive.</p>
 <p>By the end of this notebook, you will be able to:</p>
 <ol type="1">
 <li>Set up your R environment by loading the essential packages for geospatial analysis.</li>
@@ -468,7 +468,7 @@ window.Quarto = {
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("sf")</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("terra")</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("tmap")</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("ggplot2") # The premier package for data visualization</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("ggplot2")</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("dplyr")</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("spData")</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("geodata")</span></span>
@@ -482,9 +482,9 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Core Packages ---</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)         <span class="co"># Handles vector data (Simple Features). The modern standard.</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)      <span class="co"># Handles raster data. The modern, high-performance successor to the 'raster' package.</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)       <span class="co"># Used for creating beautiful thematic maps (like ggplot2 for maps).</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)    <span class="co"># A powerful and versatile grammar of graphics for visualization.</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)      <span class="co"># A grammar of data manipulation, works seamlessly with 'sf'.</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)       <span class="co"># For thematic maps (ggplot2-style, but for maps).</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)    <span class="co"># Grammar of graphics for visualization.</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)      <span class="co"># Grammar of data manipulation; works well with 'sf'.</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Data Packages ---</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(spData)     <span class="co"># Contains example spatial datasets for practice.</span></span>
@@ -1034,9 +1034,9 @@ max value   : 3.414175 </code></pre>
 </section>
 <section id="creating-maps-with-tmap" class="level2">
 <h2 class="anchored" data-anchor-id="creating-maps-with-tmap">1.4 Creating Maps with <code>tmap</code></h2>
-<p>While <code>plot()</code> is great for quick checks, the <code>tmap</code> package provides a powerful and flexible system for creating publication-quality thematic maps. It uses a “grammar of graphics” approach, similar to <code>ggplot2</code>, where you build a map layer by layer.</p>
+<p>While <code>plot()</code> is great for quick checks, the <code>tmap</code> package provides a flexible system for creating publication-quality thematic maps. It uses a “grammar of graphics” approach, similar to <code>ggplot2</code>, where you build a map layer by layer.</p>
 <p>The main components are: * <code>tm_shape()</code>: Specifies the <code>sf</code> or <code>SpatRaster</code> object to be mapped. * <code>tm_polygons()</code>, <code>tm_lines()</code>, <code>tm_dots()</code>, <code>tm_raster()</code>: Specify <em>how</em> to draw the shape. * <code>tm_layout()</code>, <code>tm_compass()</code>, <code>tm_scale_bar()</code>: Functions to customize the map’s appearance and add map furniture.</p>
-<p>A key feature of <code>tmap</code> is its dual-mode functionality. You can create: 1. <strong>Static Maps (<code>tmap_mode("plot")</code>)</strong>: High-quality images suitable for publications, reports, and presentations. 2. <strong>Interactive Maps (<code>tmap_mode("view")</code>)</strong>: Dynamic maps that you can pan, zoom, and query in a web browser or the RStudio Viewer. This is incredibly useful for data exploration.</p>
+<p>A key feature of <code>tmap</code> is its dual-mode functionality. You can create: 1. <strong>Static Maps (<code>tmap_mode("plot")</code>)</strong>: High-quality images suitable for publications, reports, and presentations. 2. <strong>Interactive Maps (<code>tmap_mode("view")</code>)</strong>: Dynamic maps that you can pan, zoom, and query in a web browser or the RStudio Viewer. This is very useful for data exploration.</p>
 <section id="worked-example-static-maps" class="level3">
 <h3 class="anchored" data-anchor-id="worked-example-static-maps">Worked Example: Static Maps</h3>
 <p>Let’s create a high-quality map showing life expectancy in Africa, highlighting Uganda, and another map showing Uganda’s elevation.</p>
@@ -1100,8 +1100,8 @@ max value   : 3.414175 </code></pre>
 </div>
 </section>
 <section id="the-power-of-interactive-mode" class="level3">
-<h3 class="anchored" data-anchor-id="the-power-of-interactive-mode">The Power of Interactive Mode</h3>
-<p>The real magic of <code>tmap</code> for data exploration comes from its interactive mode. By simply running <code>tmap_mode("view")</code> once, all subsequent <code>tmap</code> plots become interactive Leaflet maps. You can click on features to see their data, zoom in on areas of interest, and switch between different basemaps. This is invaluable for sanity-checking your data and discovering patterns.</p>
+<h3 class="anchored" data-anchor-id="the-power-of-interactive-mode">Interactive Mode</h3>
+<p>For data exploration, the interactive mode of <code>tmap</code> is especially useful. By simply running <code>tmap_mode("view")</code> once, all subsequent <code>tmap</code> plots become interactive Leaflet maps. You can click on features to see their data, zoom in on areas of interest, and switch between different basemaps. This is invaluable for sanity-checking your data and discovering patterns.</p>
 <p>Let’s take our first map and view it interactively.</p>
 <div class="cell">
 <details class="code-fold">
@@ -1392,8 +1392,8 @@ max value   : 3.414175 </code></pre>
 <section id="module-1-finish-line" class="level1">
 <h1>Module 1 Finish Line</h1>
 <p>Congratulations on completing the first module!</p>
-<p>You have acquired the fundamental skills for working with spatial data in R. You have learned how to use <code>sf</code> and <code>dplyr</code> to manage and query vector data, how to use <code>terra</code> to perform essential operations on raster data, and how to turn that data into informative and visually appealing maps.</p>
-<p>Specifically, you now have two powerful mapping tools at your disposal: * <strong><code>tmap</code></strong>, which provides a straightforward grammar for creating both static, publication-quality maps and incredibly useful interactive maps for data exploration. * <strong><code>ggplot2</code></strong>, which extends its famous grammar of graphics to spatial data with <code>geom_sf</code>, allowing for deep customization and integration into a tidyverse workflow.</p>
+<p>You have acquired the fundamental skills for working with spatial data in R. You have learned how to use <code>sf</code> and <code>dplyr</code> to manage and query vector data, how to use <code>terra</code> to perform essential operations on raster data, and how to turn that data into clear, informative maps.</p>
+<p>Specifically, you now have two mapping tools to work with: * <strong><code>tmap</code></strong>, which provides a straightforward grammar for creating both static, publication-quality maps and useful interactive maps for data exploration. * <strong><code>ggplot2</code></strong>, which extends its famous grammar of graphics to spatial data with <code>geom_sf</code>, allowing for detailed customization and integration into a tidyverse workflow.</p>
 
 
 </section>

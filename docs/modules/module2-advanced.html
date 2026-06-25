@@ -408,7 +408,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <hr>
 <section id="setup-loading-packages-and-installation" class="level2">
 <h2 class="anchored" data-anchor-id="setup-loading-packages-and-installation">2.1 Setup: Loading Packages and Installation</h2>
-<p>As before, we begin by loading the packages we need. This module introduces <code>rayshader</code>, a powerful package for 3D visualization.</p>
+<p>As before, we begin by loading the packages we need. This module introduces <code>rayshader</code>, a package for 3D visualization.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show/Hide Code</summary>
@@ -440,7 +440,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="advanced-vector-data-techniques-with-sf">2.2 Advanced Vector Data Techniques with <code>sf</code></h2>
 <section id="spatial-joins" class="level3">
 <h3 class="anchored" data-anchor-id="spatial-joins">Spatial Joins</h3>
-<p>A spatial join is similar to a regular <code>dplyr::left_join()</code>, but instead of joining two tables based on a common ID column, it joins them based on their <strong>spatial relationship</strong>. This is an incredibly powerful tool for enriching your data.</p>
+<p>A spatial join is similar to a regular <code>dplyr::left_join()</code>, but instead of joining two tables based on a common ID column, it joins them based on their <strong>spatial relationship</strong>. This is a very useful tool for enriching your data.</p>
 <p><strong>Worked Example: Assigning Points to Polygons</strong></p>
 <p>Imagine we have a dataset of GPS coordinates for several disease outbreak locations, and we want to know which country each outbreak is in.</p>
 <div class="cell">
@@ -595,7 +595,7 @@ GEOGCRS["WGS 84",
 </section>
 <section id="geometric-operations" class="level3">
 <h3 class="anchored" data-anchor-id="geometric-operations">Geometric Operations</h3>
-<p>The <code>sf</code> package allows for powerful geometric operations. The two most common are <code>st_intersection()</code> (finding common area) and <code>st_union()</code> (dissolving boundaries).</p>
+<p>The <code>sf</code> package supports a range of geometric operations. The two most common are <code>st_intersection()</code> (finding common area) and <code>st_union()</code> (dissolving boundaries).</p>
 <p><strong>Worked Example (Union): Creating a Single Regional Polygon</strong></p>
 <div class="cell">
 <details class="code-fold">
@@ -957,7 +957,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 </section>
 <section id="d-visualization-with-rayshader" class="level2">
 <h2 class="anchored" data-anchor-id="d-visualization-with-rayshader">2.4 3D Visualization with <code>rayshader</code></h2>
-<p>While <code>tmap</code> and <code>ggplot2</code> are excellent for 2D maps, the <code>rayshader</code> package allows us to create stunning 2D and 3D data visualizations, adding a new dimension to our analysis. It uses elevation data in a standard R matrix and a combination of raytracing and hillshading algorithms to generate beautiful maps.</p>
+<p>While <code>tmap</code> and <code>ggplot2</code> are excellent for 2D maps, the <code>rayshader</code> package lets us create 2D and 3D data visualizations from elevation data. It uses an elevation matrix together with raytracing and hillshading algorithms to generate the maps.</p>
 <section id="worked-example-creating-a-3d-map-of-monterey-bay" class="level3">
 <h3 class="anchored" data-anchor-id="worked-example-creating-a-3d-map-of-monterey-bay">Worked Example: Creating a 3D Map of Monterey Bay</h3>
 <p>The core <code>rayshader</code> workflow involves taking an elevation matrix and layering different shade components (color, shadow, ambient light) before plotting it in 2D or 3D. We will use the <code>montereybay</code> dataset, which is built into <code>rayshader</code>.</p>
@@ -1149,7 +1149,7 @@ Projected CRS: SIRGAS 2000 / Brazil Polyconic
 <section id="module-2-conclusion" class="level1">
 <h1>Module 2 Conclusion</h1>
 <p>In this module, we moved from basic data handling to the fundamental analytical operations that underpin geospatial analysis. You learned how to integrate different datasets using <strong>spatial joins</strong>, model areas of influence with <strong>buffers</strong>, and perform powerful <strong>geometric operations</strong> and <strong>raster calculations</strong>.</p>
-<p>Most importantly, you learned how to bridge the vector-raster divide using <strong>zonal statistics</strong>, a technique that is absolutely critical for combining environmental data with administrative or health data. Finally, you learned how to take your analysis into the third dimension with the <code>rayshader</code> package, creating compelling 3D visualizations from elevation data.</p>
+<p>Most importantly, you learned how to bridge the vector-raster divide using <strong>zonal statistics</strong>, a technique that is central to combining environmental data with administrative or health data. Finally, you learned how to take your analysis into the third dimension with the <code>rayshader</code> package, creating 3D visualizations from elevation data.</p>
 <p>With these skills, you are now equipped to perform complex data preparation tasks. In the next module, we will focus specifically on acquiring and processing remote sensing data, such as NDVI and LST.</p>
 
 
